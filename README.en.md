@@ -2,7 +2,7 @@
 
 English | [中文](README.md)
 
-An Editor extension for Unity 6 UI Builder that assists with UXML/USS previews, style navigation, and layout diagnostics. This repository is a standalone development project migrated from the SEC Lab project; the embedded package has no SEC Lab dependency.
+An Editor extension for Unity 6 UI Builder that assists with UXML/USS previews, style navigation, and layout diagnostics. Install it in other Unity projects as an independent UPM package.
 
 ## Current scope
 
@@ -25,16 +25,16 @@ Open the repository root in Unity Hub with **Unity 6000.3.27f1**. Unity loads th
 
 ## Install in another Unity project
 
-The remote repository has not been created yet. After it exists, replace `<GITHUB_USER>/<REPOSITORY>` in this placeholder URL and use Package Manager's **Add package from git URL** command:
+Open Unity's **Package Manager**, choose **+ → Add package from git URL**, and paste this address:
 
 ```text
-https://github.com/<GITHUB_USER>/<REPOSITORY>.git?path=/Packages/com.poorl.ui-builder-navigator
+https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator
 ```
 
-The same URL can be added to the target project's `Packages/manifest.json`:
+Alternatively, add this entry to the existing `dependencies` object in the target project's `Packages/manifest.json`:
 
 ```json
-"com.poorl.ui-builder-navigator": "https://github.com/<GITHUB_USER>/<REPOSITORY>.git?path=/Packages/com.poorl.ui-builder-navigator"
+"com.poorl.ui-builder-navigator": "https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator"
 ```
 
 ## Tests
@@ -63,4 +63,4 @@ The extension uses internal Unity UI Builder Editor APIs. Compatibility is curre
 
 ## License
 
-No open-source license has been specified for this project.
+Licensed under the [MIT License](LICENSE). Commercial use, modification and redistribution are permitted with the copyright and license notices preserved. The UPM package includes its own [license copy](Packages/com.poorl.ui-builder-navigator/LICENSE.md).

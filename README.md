@@ -2,7 +2,7 @@
 
 [English](README.en.md) | 中文
 
-用于 Unity 6 UI Builder 的 Editor 扩展，为 UXML/USS 预览、样式定位和布局诊断提供辅助功能。该仓库是从 SEC Lab 工程中独立迁出的开发工程；嵌入包不依赖 SEC Lab。
+用于 Unity 6 UI Builder 的 Editor 扩展，为 UXML/USS 预览、样式定位和布局诊断提供辅助功能。可作为独立 UPM 包安装到其他 Unity 项目。
 
 ## 当前范围
 
@@ -25,16 +25,16 @@ ProjectSettings/                             Unity 开发工程设置
 
 ## 安装到其他 Unity 项目
 
-远端仓库尚未创建。创建远端后，请将下列占位地址中的 `<GITHUB_USER>/<REPOSITORY>` 替换为实际仓库路径，再通过 Package Manager 的 **Add package from git URL** 安装：
+打开 Unity 的 **Package Manager**，点击 **+ → Add package from git URL**，粘贴以下地址并确认：
 
 ```text
-https://github.com/<GITHUB_USER>/<REPOSITORY>.git?path=/Packages/com.poorl.ui-builder-navigator
+https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator
 ```
 
-也可以将同一地址写入目标项目的 `Packages/manifest.json`：
+或者将下面这一项加入目标项目 `Packages/manifest.json` 现有的 `dependencies` 对象中：
 
 ```json
-"com.poorl.ui-builder-navigator": "https://github.com/<GITHUB_USER>/<REPOSITORY>.git?path=/Packages/com.poorl.ui-builder-navigator"
+"com.poorl.ui-builder-navigator": "https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator"
 ```
 
 ## 测试
@@ -63,4 +63,4 @@ Get-ChildItem -LiteralPath 'Packages/com.poorl.ui-builder-navigator/Tests~' -Fil
 
 ## 许可证
 
-本项目尚未指定开源许可证。
+本项目采用 [MIT 许可证](LICENSE)。允许商用、修改和再分发，使用或分发时须保留版权及许可证声明。UPM 包内也包含 [许可证副本](Packages/com.poorl.ui-builder-navigator/LICENSE.md)。

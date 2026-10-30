@@ -1,10 +1,20 @@
-# UI Builder USS Preview Navigator
+# UI Builder Navigator
 
 [English](README.en.md) | 中文
 
 给 Unity UI Builder 底部的 **UXML Preview 与 USS Preview** 增加语法配色和选择联动，并在右侧 Inspector 的独立“诊断”页显示计算盒模型与只读样式来源：选择页面元素时定位到 UXML 开始标签，查看属性的最终值、声明来源和覆盖链，点击来源定位 USS 规则。
 
 这是独立的 Editor UPM 包。开发工程通过 `Packages/com.poorl.ui-builder-navigator` 嵌入本包；其他工程可通过 Package Manager 的本地 package.json 或 Git 子目录 URL 安装。包不依赖原业务项目的代码或资源，也不添加第三方依赖。
+
+## 安装
+
+在 Unity Package Manager 中点击 **+ → Add package from git URL**，粘贴：
+
+```text
+https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator
+```
+
+仓库主页：[UI Builder Navigator](https://github.com/codedeefmd/UI-Builder-Navigator)。
 
 ## 界面语言（zh / en）
 
@@ -198,3 +208,7 @@ Inspector 页签在 Unity 6000.3.27f1 中通过 `InspectorTabsChecks.cs.txt` 验
 - [Unity 6000.3.27 原生级联排序](https://github.com/Unity-Technologies/UnityCsReference/blob/32dee660a55df47c2c02fce871533e39549a6e7e/Modules/UIElements/Core/StyleSheets/StyleSelectorHelper.cs)
 - [Unity 6000.3.27 变量解析失败时的 unset 行为](https://github.com/Unity-Technologies/UnityCsReference/blob/32dee660a55df47c2c02fce871533e39549a6e7e/Modules/UIElements/Core/StyleSheets/StylePropertyReader.cs)
 - [Unity 6000.3.27 原生 Length 与计算布局属性](https://github.com/Unity-Technologies/UnityCsReference/blob/32dee660a55df47c2c02fce871533e39549a6e7e/Modules/UIElements/Core/Style/Generated/ComputedStyle.cs)
+
+## 许可证
+
+本包采用 [MIT 许可证](LICENSE.md)。允许商用、修改和再分发，使用或分发时须保留版权及许可证声明。

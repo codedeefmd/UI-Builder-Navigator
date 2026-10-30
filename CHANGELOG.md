@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Added the MIT license to the repository and UPM package, and updated package license metadata.
+- Replaced placeholder installation URLs and outdated pre-publication notes in both languages with the public repository address.
+
 ## [0.1.0] - 2026-10-30
 
 ### Migration baseline

@@ -1,10 +1,20 @@
-# UI Builder USS Preview Navigator
+# UI Builder Navigator
 
 English | [中文](README.md)
 
 An independent Editor extension for Unity UI Builder. It adds readable, linked UXML/USS source previews and a separate Inspector diagnostics page. The development project embeds the UPM package at `Packages/com.poorl.ui-builder-navigator`. Other projects can install its local `package.json` or use a Git URL with this package subfolder. There are no third-party dependencies.
 
 Tested with **Unity 6.3 LTS / 6000.3.27f1 on Windows**. The assembly is Editor-only and does not enter Player builds.
+
+## Installation
+
+In Unity Package Manager, choose **+ → Add package from git URL** and paste:
+
+```text
+https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.ui-builder-navigator
+```
+
+Repository: [UI Builder Navigator](https://github.com/codedeefmd/UI-Builder-Navigator).
 
 ## Language and settings
 
@@ -59,3 +69,7 @@ Export with PowerShell 7:
 ```
 
 The default output is `Builds/Tools/UIBuilderUssNavigator.unitypackage`. Export reads only plugin files and their metadata; it does not invoke global Unity asset saves.
+
+## License
+
+Licensed under the [MIT License](LICENSE.md). Commercial use, modification and redistribution are permitted with the copyright and license notices preserved.
