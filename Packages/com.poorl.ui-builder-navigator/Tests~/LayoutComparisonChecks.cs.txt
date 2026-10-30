@@ -1,0 +1,101 @@
+// 第二步：检查真实布局值、保留单位、旋转缩放几何和共享覆盖层交接，finally 清理临时树。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var selectedBefore = access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null);
+var uxmlBefore = access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+var ussBefore = access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var overlayRoot = (UnityEngine.UIElements.VisualElement)overlay.GetType().GetField("root", flags).GetValue(overlay);
+var viewportHover = session.GetType().GetField("viewportHover", flags).GetValue(session);
+var host = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "layout-comparison-test-host");
+var saved = (object[])host.userData;
+var parent = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "layout-comparison-test-parent");
+var child = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "layout-comparison-test-child");
+var nextParent = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "layout-comparison-test-next-parent");
+var type = plugin.GetType("UIBuilderUssNavigator.InspectorLayoutComparison");
+var view = Activator.CreateInstance(type, flags, null, new object[] { new Action<bool>(active => { }) }, null);
+var viewRoot = (UnityEngine.UIElements.Foldout)type.GetProperty("Element", flags).GetValue(view, null);
+viewRoot.value = true;
+var refreshView = type.GetMethod("Refresh", flags);
+Func<string, string> text = name =>
+{
+    var label = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(viewRoot, name);
+    return label.userData as string ?? label.text;
+};
+Action<bool, string> check = (success, message) => { if (!success) throw new Exception(message); };
+var owner = overlay.GetType().GetField("owner", flags);
+var show = overlay.GetType().GetMethod("ShowLayout", flags);
+var logs = new System.Collections.Generic.List<string>();
+try
+{
+    refreshView.Invoke(view, new object[] { child });
+    check(text("layout-parent-border-size") == "440 × 260 px", "父外框尺寸错误");
+    check(text("layout-parent-content-size") == "396 × 216 px", "父内容区混入 padding / border");
+    check(text("layout-parent-flex-direction") == "row" && text("layout-parent-flex-wrap") == "wrap", "父排列或换行信息错误");
+    check(text("layout-parent-justify-content") == "space-between" && text("layout-parent-align-items") == "center", "父主轴/交叉轴对齐信息错误");
+    check(text("layout-current-flex-grow") == "0" && text("layout-current-flex-shrink") == "1", "Grow/Shrink 数值错误");
+    check(text("layout-current-align-self") == "flex-end" && text("layout-current-position") == "relative", "自身对齐或定位错误");
+    logs.Add("PASS 父内容区/外框区分，方向、换行、对齐与 Grow/Shrink");
+    check(text("layout-current-flex-basis") == "40%", "百分比 Basis 被误标为 px");
+    check(text("layout-current-min-width") == "25%" && text("layout-current-max-width") == "75%", "百分比边界被丢失");
+    check(text("layout-current-min-height") == "30px" && text("layout-current-max-height") == "none", "px / none 边界显示错误");
+    check(text("layout-parent-flex-basis") == "auto", "auto Basis 变成了 0px");
+    logs.Add("PASS Basis 与 min/max 保留百分比、px、auto、none");
+    show.Invoke(overlay, new object[] { child });
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "未取得父子对照覆盖层");
+    check(object.ReferenceEquals(parent, overlay.GetType().GetField("parentElement", flags).GetValue(overlay)), "没有使用直接父容器");
+    check((Rect)overlay.GetType().GetField("parentBox", flags).GetValue(overlay) == parent.contentRect, "父高亮不是内容区");
+    check((Rect)overlay.GetType().GetField("borderBox", flags).GetValue(overlay) == new Rect(0f, 0f, child.layout.width, child.layout.height), "子高亮不是 border-box");
+    var point = overlay.GetType().GetMethod("LayoutPoint", flags);
+    var corners = new[] { new Vector2(0f, 0f), new Vector2(child.layout.width, 0f), new Vector2(child.layout.width, child.layout.height), new Vector2(0f, child.layout.height) };
+    foreach (var corner in corners)
+    {
+        var actual = (Vector2)point.Invoke(overlay, new object[] { child, corner });
+        var expected = UnityEngine.UIElements.VisualElementExtensions.WorldToLocal(overlayRoot,
+            UnityEngine.UIElements.VisualElementExtensions.LocalToWorld(child, corner));
+        check(Vector2.Distance(actual, expected) < 0.01f, "子轮廓坐标变换错误");
+    }
+    var first = (Vector2)point.Invoke(overlay, new object[] { child, corners[0] });
+    var second = (Vector2)point.Invoke(overlay, new object[] { child, corners[1] });
+    check(Mathf.Abs(second.x - first.x) > 1f && Mathf.Abs(second.y - first.y) > 1f, "旋转后轮廓退化成轴对齐矩形");
+    logs.Add("PASS 父内容区与子外框几何、独立旋转/缩放/平移逐角转换");
+    var scroll = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(host, "layout-comparison-test-scroll");
+    var scrolled = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "layout-comparison-test-scrolled");
+    show.Invoke(overlay, new object[] { scrolled });
+    check(object.ReferenceEquals(scroll.contentContainer, overlay.GetType().GetField("parentElement", flags).GetValue(overlay)), "ScrollView 没有使用实际内容容器作为父级");
+    var beforeScroll = (Vector2)point.Invoke(overlay, new object[] { scrolled, Vector2.zero });
+    scroll.scrollOffset = new Vector2(0f, 35f);
+    show.Invoke(overlay, new object[] { scrolled });
+    var afterScroll = (Vector2)point.Invoke(overlay, new object[] { scrolled, Vector2.zero });
+    check(Mathf.Abs((afterScroll.y - beforeScroll.y) + 35f) < 0.1f, "ScrollView 滚动后高亮几何没有跟随");
+    logs.Add("PASS ScrollView 实际父容器与滚动位移跟随");
+    viewportHover.GetType().GetMethod("Clear", flags).Invoke(viewportHover, null);
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "Viewport 的旧释放清掉了布局对照");
+    nextParent.Add(child);
+    show.Invoke(overlay, new object[] { child });
+    check(object.ReferenceEquals(nextParent, overlay.GetType().GetField("parentElement", flags).GetValue(overlay)), "重新挂载后仍高亮旧父级");
+    child.RemoveFromHierarchy();
+    show.Invoke(overlay, new object[] { child });
+    check(owner.GetValue(overlay).ToString() == "None", "脱离 Panel 后仍保留对照");
+    refreshView.Invoke(view, new object[] { new UnityEngine.UIElements.VisualElement() });
+    check(viewRoot.style.display.value == UnityEngine.UIElements.DisplayStyle.None, "无 Panel 时未收起布局信息");
+    logs.Add("PASS 旧入口定向释放、重新挂载、脱离 Panel 与无布局状态");
+    check(object.ReferenceEquals(selectedBefore, access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "改变了原生选择");
+    check(Equals(uxmlBefore, access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) &&
+        Equals(ussBefore, access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "改变了内存 UXML / USS");
+    logs.Add("PASS 原生选择和内存文档保持");
+    return logs;
+}
+finally
+{
+    overlay.GetType().GetMethod("Hide", flags, null, Type.EmptyTypes, null).Invoke(overlay, null);
+    host.RemoveFromHierarchy();
+    box.GetType().GetMethod("ClearHover", flags).Invoke(box, null);
+    session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+}

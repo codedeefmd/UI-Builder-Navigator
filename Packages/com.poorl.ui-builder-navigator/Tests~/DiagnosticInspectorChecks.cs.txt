@@ -1,0 +1,100 @@
+// 先运行 StyleSourcesSetup 与 LayoutComparisonHoverSetup；检查后由各自 Checks 清理。
+// 本文件只读原页面，并创建独立的临时值控件验证透明色、隐藏和语义文本，不保存资源。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var source = session.GetType().GetField("styleSources", flags).GetValue(session);
+var sourceRoot = (UnityEngine.UIElements.VisualElement)source.GetType().GetField("root", flags).GetValue(source);
+var host = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "style-sources-test-host");
+// 用户可能在两次 MCP 调用之间继续选择元素；只读断言以本次原子检查开始时的状态为准。
+var saved = new object[] {
+    access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)
+};
+var readerType = plugin.GetType("UIBuilderUssNavigator.StyleSourceReader");
+var reader = Activator.CreateInstance(readerType, flags, null, new object[] { window.GetType().Assembly }, null);
+Func<object, string, object> field = (instance, name) => instance.GetType().GetField(name, flags).GetValue(instance);
+Func<string, object> colorRow = role =>
+{
+    var element = role == "host" ? host : UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-" + role);
+    return ((System.Collections.IEnumerable)readerType.GetMethod("Read", flags).Invoke(reader, new object[] { element }))
+        .Cast<object>().First(candidate => (string)field(field(candidate, "Property"), "Name") == "color");
+};
+Action<bool, string> check = (success, message) => { if (!success) throw new Exception(message); };
+var logs = new System.Collections.Generic.List<string>();
+var temporary = new UnityEngine.UIElements.VisualElement { name = "diagnostic-inspector-test", pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+temporary.style.position = UnityEngine.UIElements.Position.Absolute;
+temporary.style.left = -20000f;
+temporary.style.top = -20000f;
+window.rootVisualElement.Add(temporary);
+try
+{
+    var literal = colorRow("host");
+    check(((Color)field(literal, "ColorValue")).Equals(host.resolvedStyle.color), "最终色块数据与 resolvedStyle 不符");
+    check(((Color)field(field(literal, "Winner"), "ColorValue")).Equals(host.resolvedStyle.color), "USS 常量色块读取不正确");
+    var variable = colorRow("variable");
+    var variableElement = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-variable");
+    check(((Color)field(variable, "ColorValue")).Equals(variableElement.resolvedStyle.color), "变量最终颜色错误");
+    check(field(field(variable, "Winner"), "ColorValue") == null, "var() 被伪造成颜色常量");
+    var invalidVariable = colorRow("invalid-variable");
+    check(((Color)field(invalidVariable, "ColorValue")).Equals(host.resolvedStyle.color), "变量失败后的继承颜色错误");
+    logs.Add("PASS 原生颜色常量、变量最终值、失败继承与声明色块区分");
+    var named = colorRow("named");
+    check(((Color)field(field(named, "Winner"), "ColorValue")).Equals(Color.white), "white 命名颜色没有声明色块");
+    var namedElement = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-named");
+    var transparent = ((System.Collections.IEnumerable)readerType.GetMethod("Read", flags).Invoke(reader, new object[] { namedElement }))
+        .Cast<object>().First(candidate => (string)field(field(candidate, "Property"), "Name") == "background-color");
+    check(((Color)field(field(transparent, "Winner"), "ColorValue")).Equals(Color.clear), "transparent 没有透明常量色块");
+    logs.Add("PASS white 与 transparent 命名常量色块");
+    var runtime = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-runtime-inline");
+    var rgba = new Color(0.2f, 0.4f, 0.6f, 0.5f);
+    runtime.style.color = rgba;
+    var inline = colorRow("runtime-inline");
+    check(((Color)field(inline, "ColorValue")).Equals(rgba), "运行时颜色最终值错误");
+    check(((Color)field(field(inline, "Winner"), "ColorValue")).Equals(rgba), "运行时内联颜色常量丢失");
+    var textType = plugin.GetType("UIBuilderUssNavigator.DiagnosticText");
+    var formatter = (Func<string, bool, string>)Delegate.CreateDelegate(typeof(Func<string, bool, string>), textType.GetMethod("Value", flags));
+    var valueType = plugin.GetType("UIBuilderUssNavigator.DiagnosticValue");
+    var value = (UnityEngine.UIElements.VisualElement)Activator.CreateInstance(valueType, flags, null, new object[] { "diagnostic-test-value", formatter }, null);
+    temporary.Add(value);
+    var setValue = valueType.GetMethod("SetValue", flags);
+    setValue.Invoke(value, new object[] { "rgba(51, 102, 153, 0.5)", rgba });
+    var label = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(value, "diagnostic-test-value");
+    var swatch = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(value, "diagnostic-color-swatch");
+    check(swatch.style.display.value == UnityEngine.UIElements.DisplayStyle.Flex && !swatch.focusable, "颜色样本未显示或可被编辑聚焦");
+    string readOnlyText = (string)plugin.GetType("UIBuilderUssNavigator.L10n").GetProperty("Language", flags).GetValue(null, null) == "zh"
+        ? "只读" : "Read-only";
+    check(((Color)field(swatch, "color")).Equals(rgba) && swatch.tooltip.Contains(readOnlyText), "色块 alpha 或只读信息丢失");
+    check((string)label.userData == "rgba(51, 102, 153, 0.5)", "显示配色改变了原文");
+    check(label.text.Contains("<color=#") && label.enableRichText, "值未使用语义配色");
+    setValue.Invoke(value, new object[] { "auto", null });
+    check(swatch.style.display.value == UnityEngine.UIElements.DisplayStyle.None, "切换为普通值后残留色块");
+    logs.Add("PASS RGBA 透明度、只读样本、原文分离及颜色/普通值切换");
+    var keywords = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(window.rootVisualElement, "layout-current-flex-direction");
+    var sizes = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(window.rootVisualElement, "layout-current-border-size");
+    bool dark = UnityEditor.EditorGUIUtility.isProSkin;
+    var tone = plugin.GetType("UIBuilderUssNavigator.DiagnosticTone");
+    Func<string, string> roleColor = name => (string)textType.GetMethod("ColorCode", flags).Invoke(null, new object[] { Enum.Parse(tone, name), dark });
+    check(keywords.text.Contains(roleColor("Keyword")) && keywords.userData is string, "布局枚举没有关键字配色或原文");
+    check(sizes.text.Contains(roleColor("Number")) && sizes.text.Contains(roleColor("Unit")), "布局数值和单位没有分色");
+    check(keywords.style.fontSize.value.value >= 12f, "布局文字仍过小");
+    var actualSwatches = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(sourceRoot, "diagnostic-color-swatch", (string)null).ToList();
+    check(actualSwatches.Any(candidate => candidate.style.display.value == UnityEngine.UIElements.DisplayStyle.Flex), "实际来源面板没有颜色样本");
+    check(!UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(sourceRoot, null, (string)null)
+        .ToList().Any(candidate => candidate.GetType().Name == "ColorField"), "来源面板意外出现可编辑 ColorField");
+    logs.Add("PASS 实际布局值/关键字/单位分色、字号和来源只读色块");
+    check(object.ReferenceEquals(saved[0], access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "诊断显示改变了原生选择");
+    check(Equals(saved[1], access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) &&
+        Equals(saved[2], access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "诊断显示改写了页面内存内容");
+    logs.Add("PASS 原生选择和未保存的 UXML/USS 内容保持");
+    return logs;
+}
+finally
+{
+    temporary.RemoveFromHierarchy();
+}

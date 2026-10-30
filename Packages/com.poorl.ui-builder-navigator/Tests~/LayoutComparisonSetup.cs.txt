@@ -1,0 +1,66 @@
+// 第一步：在文档之外建立临时父子节点。等一轮 Editor 布局后执行 LayoutComparisonChecks.cs.txt。
+// 不创建资源、不保存文档、不改变原生选择；Checks 的 finally 移除所有临时节点。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var host = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-test-host", pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+host.style.position = UnityEngine.UIElements.Position.Absolute;
+host.style.left = -20000f;
+host.style.top = -20000f;
+host.style.width = 900f;
+host.style.height = 700f;
+host.userData = new object[] {
+    access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)
+};
+var parent = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-test-parent" };
+parent.style.width = 440f;
+parent.style.height = 260f;
+parent.style.paddingTop = parent.style.paddingRight = parent.style.paddingBottom = parent.style.paddingLeft = 20f;
+parent.style.borderTopWidth = parent.style.borderRightWidth = parent.style.borderBottomWidth = parent.style.borderLeftWidth = 2f;
+parent.style.flexDirection = UnityEngine.UIElements.FlexDirection.Row;
+parent.style.flexWrap = UnityEngine.UIElements.Wrap.Wrap;
+parent.style.justifyContent = UnityEngine.UIElements.Justify.SpaceBetween;
+parent.style.alignItems = UnityEngine.UIElements.Align.Center;
+parent.style.rotate = new UnityEngine.UIElements.Rotate(new UnityEngine.UIElements.Angle(23f, UnityEngine.UIElements.AngleUnit.Degree));
+parent.style.scale = new UnityEngine.UIElements.Scale(new Vector3(1.2f, 1.1f, 1f));
+var child = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-test-child" };
+child.style.width = UnityEngine.UIElements.Length.Percent(50f);
+child.style.height = 80f;
+child.style.flexBasis = UnityEngine.UIElements.Length.Percent(40f);
+child.style.minWidth = UnityEngine.UIElements.Length.Percent(25f);
+child.style.maxWidth = UnityEngine.UIElements.Length.Percent(75f);
+child.style.minHeight = 30f;
+child.style.maxHeight = UnityEngine.UIElements.StyleKeyword.None;
+child.style.alignSelf = UnityEngine.UIElements.Align.FlexEnd;
+child.style.flexGrow = 0f;
+child.style.flexShrink = 1f;
+child.style.rotate = new UnityEngine.UIElements.Rotate(new UnityEngine.UIElements.Angle(-7f, UnityEngine.UIElements.AngleUnit.Degree));
+child.style.translate = new UnityEngine.UIElements.Translate(6f, 9f, 0f);
+parent.Add(child);
+var other = new UnityEngine.UIElements.VisualElement();
+other.style.width = 80f;
+other.style.height = 30f;
+other.style.flexGrow = 1f;
+parent.Add(other);
+host.Add(parent);
+var nextParent = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-test-next-parent" };
+nextParent.style.width = 300f;
+nextParent.style.height = 200f;
+host.Add(nextParent);
+var scroll = new UnityEngine.UIElements.ScrollView(UnityEngine.UIElements.ScrollViewMode.Vertical) { name = "layout-comparison-test-scroll" };
+scroll.style.width = 300f;
+scroll.style.height = 120f;
+scroll.style.flexShrink = 0f;
+var scrolled = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-test-scrolled" };
+scrolled.style.height = 400f;
+scrolled.style.flexShrink = 0f;
+scroll.Add(scrolled);
+host.Add(scroll);
+window.rootVisualElement.Add(host);
+return "临时父子布局已建立；等一轮布局后运行 LayoutComparisonChecks.cs.txt";

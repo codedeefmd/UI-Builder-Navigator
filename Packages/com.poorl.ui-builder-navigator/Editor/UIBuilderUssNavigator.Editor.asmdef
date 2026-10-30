@@ -1,0 +1,6 @@
+{
+    "name": "UIBuilderUssNavigator.Editor",
+    "rootNamespace": "UIBuilderUssNavigator",
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}

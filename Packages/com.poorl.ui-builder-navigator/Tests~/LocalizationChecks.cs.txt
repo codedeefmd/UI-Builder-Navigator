@@ -1,0 +1,172 @@
+// 使用当前文档的 primary 按钮作同一原子调用内的临时选择；finally 恢复所有测试状态，不保存页面。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var navigator = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator");
+var session = navigator.GetField("session", flags).GetValue(null);
+Func<object, string, object> field = (instance, name) => instance.GetType().GetField(name, flags).GetValue(instance);
+var access = field(session, "access");
+var tabs = field(session, "inspectorTabs");
+var box = field(session, "boxModel");
+var overlay = field(box, "overlay");
+var source = field(session, "styleSources");
+var comparison = field(box, "comparison");
+var boxRoot = (UnityEngine.UIElements.Foldout)field(box, "root");
+var sourceRoot = (UnityEngine.UIElements.Foldout)field(source, "root");
+var tableRoot = (UnityEngine.UIElements.Foldout)comparison.GetType().GetProperty("Element", flags).GetValue(comparison, null);
+var scroll = (UnityEngine.UIElements.ScrollView)field(tabs, "diagnosticPage");
+var offset = scroll.scrollOffset;
+var languageType = plugin.GetType("UIBuilderUssNavigator.L10n");
+var language = languageType.GetProperty("Language", flags);
+var setLanguage = languageType.GetMethod("SetLanguage", flags);
+string originalLanguage = (string)language.GetValue(null, null);
+var refresh = session.GetType().GetMethod("Refresh", flags);
+var originalSelected = access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null);
+var selection = window.GetType().GetProperty("selection", flags).GetValue(window, null);
+var document = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var selected = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Button>(document, null, (string)null)
+    .ToList().First(item => item.ClassListContains("primary"));
+var beforeUxml = access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+var beforeUss = access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var previews = new[] { field(session, "uxml"), field(session, "uss") };
+var searchStates = new System.Collections.Generic.List<object[]>();
+var sourceLabels = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Label>(sourceRoot, "style-source-value", (string)null).ToList();
+UnityEngine.UIElements.Foldout overridden = null;
+bool previousExpanded = false;
+var originalTab = tabs.GetType().GetProperty("DiagnosticsVisible", flags).GetValue(tabs, null);
+var previousFoldouts = new[] { boxRoot.value, sourceRoot.value, tableRoot.value };
+var viewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var setPreview = viewport.GetType().GetMethod("SetPreviewMode", flags);
+var originalPreview = access.GetType().GetProperty("IsPreviewEnabled", flags).GetValue(access, null);
+Action<bool, string> check = (passed, message) => { if (!passed) throw new Exception(message); };
+Func<UnityEngine.UIElements.VisualElement, string[]> menuNames = target =>
+{
+    var menu = new UnityEngine.UIElements.DropdownMenu();
+    using (var mouse = UnityEngine.UIElements.MouseUpEvent.GetPooled(new Event { type = EventType.MouseUp, button = 1 }))
+    using (var evt = UnityEngine.UIElements.ContextualMenuPopulateEvent.GetPooled(mouse, menu, target, window.rootVisualElement.panel.contextualMenuManager))
+    { target.SendEvent(evt); }
+    return menu.MenuItems().OfType<UnityEngine.UIElements.DropdownMenuAction>().Select(item => item.name).ToArray();
+};
+var logs = new System.Collections.Generic.List<string>();
+try
+{
+    setPreview.Invoke(viewport, new object[] { false });
+    selection.GetType().GetMethod("Select", flags).Invoke(selection, new object[] { null, selected });
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+    boxRoot.value = sourceRoot.value = tableRoot.value = true;
+    refresh.Invoke(session, null);
+    sourceLabels = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Label>(sourceRoot, "style-source-value", (string)null).ToList();
+    overridden = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Foldout>(sourceRoot, null, (string)null).ToList()
+        .First(item => item != sourceRoot);
+    previousExpanded = overridden.value;
+    overridden.value = true;
+    foreach (object preview in previews)
+    {
+        var search = field(preview, "search");
+        var input = (UnityEngine.UIElements.TextField)field(search, "input");
+        var find = (UnityEditor.UIElements.ToolbarSearchField)field(search, "field");
+        var lines = (UnityEngine.UIElements.ListView)field(preview, "lines");
+        var previewScroll = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(lines);
+        searchStates.Add(new object[] { preview, find.value, field(search, "activeIndex"), previewScroll.scrollOffset,
+            input.cursorIndex, input.selectIndex });
+        find.value = preview == previews[0] ? "Label" : "padding";
+    }
+    var matches = previews.Select(preview => field(field(preview, "search"), "matches")).ToArray();
+    var indices = previews.Select(preview => field(field(preview, "search"), "activeIndex")).ToArray();
+    var previewOffsets = previews.Select(preview => UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(
+        (UnityEngine.UIElements.ListView)field(preview, "lines")).scrollOffset).ToArray();
+    check(((System.Collections.ICollection)matches[0]).Count > 0 && ((System.Collections.ICollection)matches[1]).Count > 0,
+        "真实预览缺少用于切换保留检查的搜索结果");
+    box.GetType().GetMethod("HoverLayout", flags).Invoke(box, new object[] { true });
+    foreach (string code in new[] { "zh", "en", "zh" })
+    {
+        bool en = code == "en";
+        setLanguage.Invoke(null, new object[] { code });
+        refresh.Invoke(session, null);
+        check(ReferenceEquals(navigator.GetField("session", flags).GetValue(null), session), "切语言重建了会话");
+        check(((UnityEditor.UIElements.ToolbarToggle)field(tabs, "propertiesTab")).text == (en ? "Properties" : "属性"), "属性页漏译");
+        check(((UnityEditor.UIElements.ToolbarToggle)field(tabs, "diagnosticsTab")).text == (en ? "Diagnostics" : "诊断"), "诊断页漏译");
+        check(boxRoot.text == (en ? "Box Model (Computed)" : "盒模型（计算值）"), "盒模型漏译");
+        check(sourceRoot.text == (en ? "Style Sources (Read-only)" : "样式来源（只读）"), "样式来源漏译");
+        check(tableRoot.text == (en ? "Parent ↔ Current Element (Layout)" : "父容器 ↔ 当前元素（布局）"), "布局对照漏译");
+        check(((UnityEngine.UIElements.Label)field(comparison, "parentHeading")).text == (en ? "Parent" : "父容器"), "父级表头漏译");
+        check(overridden.value, "换语言折叠了正在查看的覆盖链");
+        check(overridden.text.Contains(en ? "declarations" : "声明"), "覆盖链标题漏译：" + code + " / " + overridden.text);
+        var groups = (System.Collections.IEnumerable)field(source, "groups");
+        foreach (UnityEngine.UIElements.Label group in groups)
+            check(!System.Text.RegularExpressions.Regex.IsMatch((string)group.userData, "[\u4e00-\u9fff]"), "分组身份用了译文");
+        var swatch = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(sourceRoot,
+            "diagnostic-color-swatch", (string)null).ToList().First(item => item.style.display.value == UnityEngine.UIElements.DisplayStyle.Flex);
+        check(swatch.tooltip.Contains(en ? "Read-only color preview" : "只读颜色预览"), "同色 tooltip 未换语言");
+        check(field(overlay, "owner").ToString() == "LayoutComparison", "语言切换丢失覆盖层所有权");
+        check(((UnityEngine.UIElements.Label)field(overlay, "metrics")).text.Contains(en ? "Parent" : "父"), "静止悬浮信息未换语言");
+        for (int index = 0; index < previews.Length; index++)
+        {
+            var preview = previews[index];
+            var search = field(preview, "search");
+            var find = (UnityEditor.UIElements.ToolbarSearchField)field(search, "field");
+            check(find.value == (index == 0 ? "Label" : "padding") && ReferenceEquals(matches[index], field(search, "matches")) &&
+                Equals(indices[index], field(search, "activeIndex")), "语言切换丢失搜索状态");
+            check(find.placeholderText == (en ? "Find in current preview…" : "查找当前预览…"), "搜索占位符漏译");
+            var lines = (UnityEngine.UIElements.ListView)field(preview, "lines");
+            check(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(lines).scrollOffset == previewOffsets[index],
+                "语言切换重置代码滚动");
+            string[] names = menuNames(lines);
+            check(names.Contains(en ? "Copy full preview" : "复制完整预览") && names.Contains(index == 0
+                ? en ? "Copy located tag" : "复制定位标签" : en ? "Copy located rule" : "复制定位规则"), "复制菜单漏译");
+        }
+        check(scroll.scrollOffset == offset, "语言切换重置诊断滚动");
+        check(sourceLabels.SequenceEqual(UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Label>(sourceRoot,
+            "style-source-value", (string)null).ToList()), "语言切换重建来源值控件");
+        string[] related = menuNames((UnityEngine.UIElements.VisualElement)selected);
+        check(related.Any(item => item.StartsWith(en ? "Related Styles/" : "相关样式/", StringComparison.Ordinal)), "相关样式菜单漏译");
+        check(ReferenceEquals(selected, access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "语言切换改变原生选择");
+        check(Equals(beforeUxml, access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) &&
+            Equals(beforeUss, access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "语言切换修改内存源码");
+        logs.Add("PASS " + code + "：页签、面板、覆盖链、搜索/复制/相关样式菜单、静止悬浮和同色色块提示");
+    }
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { false });
+    var hiddenRows = field(source, "rows");
+    var languageMenu = (UnityEditor.UIElements.ToolbarMenu)field(tabs, "languageMenu");
+    var englishAction = languageMenu.menu.MenuItems().OfType<UnityEngine.UIElements.DropdownMenuAction>().First(item => item.name == "English");
+    englishAction.GetType().GetMethod("Execute", flags).Invoke(englishAction, null);
+    refresh.Invoke(session, null);
+    check((string)language.GetValue(null, null) == "en" && UnityEditor.EditorPrefs.GetString("UIBuilderUssNavigator.Language") == "en",
+        "可见语言入口未更新并保存语言偏好");
+    check(ReferenceEquals(hiddenRows, field(source, "rows")), "隐藏的来源面板仍在换语言时查询");
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+    check(!ReferenceEquals(hiddenRows, field(source, "rows")) && sourceRoot.text == "Style Sources (Read-only)",
+        "返回诊断页没有按当前语言读取来源");
+    logs.Add("PASS 实际语言菜单与 EditorPrefs、隐藏页不查询、重显后按当前语言刷新");
+    logs.Add("PASS 原位切换保留控件身份、搜索结果/当前项、折叠/滚动、覆盖层、选择和内存源码");
+    return logs;
+}
+finally
+{
+    box.GetType().GetMethod("ClearHover", flags).Invoke(box, null);
+    setPreview.Invoke(viewport, new object[] { originalPreview });
+    if (overridden != null) overridden.value = previousExpanded;
+    setLanguage.Invoke(null, new object[] { originalLanguage });
+    refresh.Invoke(session, null);
+    foreach (object[] saved in searchStates)
+    {
+        var search = field(saved[0], "search");
+        ((UnityEditor.UIElements.ToolbarSearchField)field(search, "field")).value = (string)saved[1];
+        search.GetType().GetField("activeIndex", flags).SetValue(search, saved[2]);
+        search.GetType().GetMethod("UpdateCounter", flags).Invoke(search, null);
+        var lines = (UnityEngine.UIElements.ListView)field(saved[0], "lines");
+        UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(lines).scrollOffset = (Vector2)saved[3];
+        ((UnityEngine.UIElements.TextField)field(search, "input")).SelectRange((int)saved[4], (int)saved[5]);
+        saved[0].GetType().GetField("pendingSearchScroll", flags).SetValue(saved[0], false);
+    }
+    boxRoot.value = previousFoldouts[0];
+    sourceRoot.value = previousFoldouts[1];
+    tableRoot.value = previousFoldouts[2];
+    if (originalSelected == null) selection.GetType().GetMethod("ClearSelection", flags).Invoke(selection, new object[] { null, false });
+    else selection.GetType().GetMethod("Select", flags).Invoke(selection, new object[] { null, originalSelected });
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { originalTab });
+    refresh.Invoke(session, null);
+    scroll.scrollOffset = offset;
+}

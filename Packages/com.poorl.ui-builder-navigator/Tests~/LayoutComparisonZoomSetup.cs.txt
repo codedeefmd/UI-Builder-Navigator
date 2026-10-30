@@ -1,0 +1,24 @@
+// 记录实际 UI Builder 的画布缩放和父子外框边长，再临时放大 1.25 倍。
+// 等布局后执行 ZoomChecks，finally 恢复缩放及偏移；不改变 Canvas Size 或文档。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var element = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("inspectedElement", flags).GetValue(box);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var point = overlay.GetType().GetMethod("LayoutPoint", flags);
+Func<float> edge = () => Vector2.Distance((Vector2)point.Invoke(overlay, new object[] { element, Vector2.zero }),
+    (Vector2)point.Invoke(overlay, new object[] { element, new Vector2(element.layout.width, 0f) }));
+var nativeViewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var zoom = nativeViewport.GetType().GetProperty("zoomScale", flags);
+var offset = nativeViewport.GetType().GetProperty("contentOffset", flags);
+float original = (float)zoom.GetValue(nativeViewport, null);
+var state = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-zoom-state" };
+state.style.display = UnityEngine.UIElements.DisplayStyle.None;
+state.userData = new object[] { original, offset.GetValue(nativeViewport, null), edge(), element.layout.width, element };
+window.rootVisualElement.Add(state);
+zoom.SetValue(nativeViewport, original * 1.25f, null);
+return "已临时改变画布缩放；等布局后运行 LayoutComparisonZoomChecks.cs.txt";

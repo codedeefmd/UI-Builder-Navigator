@@ -1,0 +1,114 @@
+// 第二步：StyleSourcesSetup.cs.txt 后，等真实 Editor 布局计算完成再执行。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var host = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "style-sources-test-host");
+var saved = (object[])host.userData;
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var selectedBefore = access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null);
+var uxmlBefore = access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+var ussBefore = access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var readerType = plugin.GetType("UIBuilderUssNavigator.StyleSourceReader");
+var reader = Activator.CreateInstance(readerType, flags, null, new object[] { window.GetType().Assembly }, null);
+var read = readerType.GetMethod("Read", flags);
+Func<object, string, object> field = (instance, name) => instance.GetType().GetField(name, flags).GetValue(instance);
+Func<string, string, object> row = (role, name) =>
+{
+    var element = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-" + role);
+    return ((System.Collections.IEnumerable)read.Invoke(reader, new object[] { element })).Cast<object>()
+        .First(candidate => (string)field(field(candidate, "Property"), "Name") == name);
+};
+Action<bool, string> check = (success, message) => { if (!success) throw new Exception(message); };
+var logs = new System.Collections.Generic.List<string>();
+try
+{
+    var width = row("probe", "width");
+    check((string)field(width, "Value") == "200 px", "百分比宽度没有显示真实布局值");
+    check(((string)field(field(width, "Winner"), "Text")).Contains("50%"), "来源声明没有保留百分比");
+    logs.Add("PASS 50% 声明与 200px 真实布局分开显示");
+    var font = row("probe", "font-size");
+    check((string)field(font, "Value") == "25 px", "ID 优先级没有胜过后出现的 class");
+    check((string)field(field(font, "Winner"), "SelectorText") == "#style-sources-probe", "错误的字号来源");
+    check(((System.Collections.IList)field(font, "Declarations")).Count >= 4, "覆盖链不完整");
+    logs.Add("PASS specificity 与同名重复规则的级联顺序");
+    check(((string)field(field(row("probe", "height"), "Winner"), "Text")).Contains("60px"), "同规则重复声明没有最后一条胜出");
+    check((string)field(row("probe", "margin-left"), "Value") == "8 px", "后出现的 margin 简写未覆盖之前的 margin-left");
+    logs.Add("PASS 同规则重复声明、后续简写覆盖长属性");
+    var padding = row("probe", "padding-left");
+    check((string)field(padding, "Value") == "7 px", "逗号规则的高优先级分支未生效");
+    var declarations = ((System.Collections.IEnumerable)field(padding, "Declarations")).Cast<object>().ToArray();
+    check(declarations.Count(candidate => (string)field(candidate, "Text") == "padding-left: 7px;") == 1, "逗号规则被重复列为覆盖项");
+    logs.Add("PASS 分组规则按最高优先级匹配去重");
+    var inherited = row("inherited", "color");
+    check((string)field(inherited, "Value") == "#2468AC" &&
+        field(inherited, "KindKey").ToString() == "Inherited", "继承值或来源错误");
+    check(object.ReferenceEquals(field(field(inherited, "Winner"), "Owner"), host), "没有找到真正声明颜色的祖先");
+    logs.Add("PASS 继承值与祖先声明来源");
+    var inline = row("inline", "width");
+    check((string)field(inline, "Value") == "300 px", "UXML 内联没有覆盖 USS");
+    check(field(inline, "Winner").GetType().GetProperty("IsInline", flags).GetValue(field(inline, "Winner"), null).Equals(true), "UXML 内联被误标为 USS");
+    check(!(bool)field(field(inline, "Winner"), "RuntimeInline"), "UXML 内联被误标为 C# 写入");
+    var runtime = row("runtime-inline", "font-size");
+    check((string)field(runtime, "Value") == "31 px" && (bool)field(field(runtime, "Winner"), "RuntimeInline"), "运行时 IStyle 写入未识别");
+    logs.Add("PASS UXML 内联与 C# IStyle 写入分别识别");
+    var normal = row("probe", "background-color");
+    check(field(normal, "Winner") == null, "未处于 hover 却把 hover 规则标为来源");
+    var hovered = row("hover", "background-color");
+    check((string)field(hovered, "Value") == "#AABBCC" && ((string)field(field(hovered, "Winner"), "SelectorText")).EndsWith(":hover"), "真实 hover 规则未作为来源");
+    logs.Add("PASS 当前真实伪状态参与来源判定");
+    var reset = row("reset", "color");
+    check((string)field(reset, "Value") == "#2468AC" && (string)field(field(reset, "Winner"), "Keyword") == "unset", "unset 声明与父级计算值未分开");
+    check(field(reset, "InheritedSource") != null, "unset 缺少继承来源");
+    check((string)field(field(row("reset", "background-color"), "Winner"), "Keyword") == "initial", "initial 声明来源丢失");
+    logs.Add("PASS unset / initial 保留声明，正确解释计算值");
+    var variable = row("variable", "color");
+    check((string)field(variable, "Value") == "#99AA33" && (bool)field(field(variable, "Winner"), "Variable"), "变量使用声明没有保留");
+    var invalid = row("invalid-variable", "color");
+    check((string)field(invalid, "Value") == "#2468AC" && (bool)field(field(invalid, "Winner"), "Variable"), "变量失败不应回退到先前红色声明");
+    logs.Add("PASS 有效变量及失败后 unset 的实际引擎结果");
+    var runtimeElement = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-runtime-inline");
+    var needsRebuild = readerType.GetMethod("NeedsRebuild", flags);
+    check((bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, false }), "新元素没有失效来源缓存");
+    check(!(bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, false }), "空闲时重复重建来源链");
+    runtimeElement.style.fontSize = 33f;
+    check((bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, false }), "运行时 inline 修改没有使来源缓存失效");
+    check((bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, true }), "内存预览变化没有使来源缓存失效");
+    logs.Add("PASS 空闲缓存复用、运行时内联与预览修改失效");
+    if (saved.Length != 6) throw new Exception("请先运行 StyleSourcesCacheSetup.cs.txt 并等待样式计算");
+    var cacheProbe = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-cache-probe");
+    var cacheHovered = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-cache-hover");
+    check((bool)needsRebuild.Invoke(saved[4], new object[] { cacheProbe, false }), "class 匹配变化没有改变来源缓存");
+    check((bool)needsRebuild.Invoke(saved[5], new object[] { cacheHovered, false }), "伪状态变化没有改变来源缓存");
+    check((string)field(row("cache-probe", "background-color"), "Value") == "#445566", "class 新规则未由引擎应用");
+    check(field(row("cache-hover", "background-color"), "Winner") == null, "离开 hover 后仍保留旧来源");
+    logs.Add("PASS 原生 matchingRulesHash 在 class 与伪状态变化后失效");
+    var inheritedElement = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-inherited");
+    needsRebuild.Invoke(reader, new object[] { inheritedElement, false });
+    host.style.color = Color.yellow;
+    check((bool)needsRebuild.Invoke(reader, new object[] { inheritedElement, false }), "祖先继承样式改变未失效");
+    var parent = new UnityEngine.UIElements.VisualElement();
+    host.Add(parent);
+    needsRebuild.Invoke(reader, new object[] { cacheProbe, false });
+    parent.Add(cacheProbe);
+    check((bool)needsRebuild.Invoke(reader, new object[] { cacheProbe, false }), "更换祖先链未失效");
+    var binding = new UnityEngine.UIElements.BindingId("style.fontSize");
+    needsRebuild.Invoke(reader, new object[] { runtimeElement, false });
+    runtimeElement.SetBinding(binding, new UnityEngine.UIElements.DataBinding());
+    check((bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, false }), "新增绑定未失效");
+    runtimeElement.ClearBinding(binding);
+    check((bool)needsRebuild.Invoke(reader, new object[] { runtimeElement, false }), "移除绑定未失效");
+    logs.Add("PASS 祖先继承样式、重新挂载与绑定增删失效");
+    check(Equals(uxmlBefore, access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)), "改变了 UXML 内存内容");
+    check(Equals(ussBefore, access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "改变了 USS 内存内容");
+    check(object.ReferenceEquals(selectedBefore, access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "改变了原生选择");
+    logs.Add("PASS 原生选择与未保存的 UXML/USS 内容保持");
+    return logs;
+}
+finally
+{
+    host.RemoveFromHierarchy();
+    UnityEngine.Object.DestroyImmediate((UnityEngine.UIElements.StyleSheet)saved[3]);
+}

@@ -1,0 +1,20 @@
+// 真实诊断页的跨布局帧检查：Setup 后分三次调用 InspectorTabsScrollChecks，不能合并到同一帧。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var scroll = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var native = (UnityEngine.UIElements.VisualElement)tabs.GetType().GetField("nativePage", flags).GetValue(tabs);
+var nativeScroll = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(native, "inspector-scroll-view");
+var marker = new UnityEngine.UIElements.VisualElement { name = "inspector-tabs-scroll-state" };
+marker.style.display = UnityEngine.UIElements.DisplayStyle.None;
+marker.userData = new object[] {
+    tabs.GetType().GetProperty("DiagnosticsVisible", flags).GetValue(tabs, null),
+    scroll.scrollOffset, nativeScroll.scrollOffset, 0, 0f
+};
+window.rootVisualElement.Add(marker);
+tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+return "已显示诊断页；等待布局后第一次运行 ScrollChecks";

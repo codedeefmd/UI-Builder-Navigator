@@ -1,0 +1,11 @@
+{
+  "name": "com.poorl.ui-builder-navigator",
+  "version": "0.1.0",
+  "displayName": "UI Builder Navigator",
+  "description": "Editor-only UI Builder extension with linked UXML/USS previews, syntax highlighting, search, style-source navigation, layout diagnostics and zh/en localization.",
+  "unity": "6000.3",
+  "unityRelease": "27f1",
+  "license": "UNLICENSED",
+  "keywords": ["editor", "ui-toolkit", "ui-builder", "uxml", "uss", "diagnostics"],
+  "dependencies": {}
+}

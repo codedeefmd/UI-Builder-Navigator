@@ -1,0 +1,69 @@
+// Unity MCP execute_code 方法体。验证实际搜索框事件和两侧隔离；不保存文档、不改变页面元素选择。
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+var window = UnityEngine.Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var assembly = System.AppDomain.CurrentDomain.GetAssemblies().First(item => item.GetName().Name == "UIBuilderUssNavigator.Editor");
+var navigator = assembly.GetType("UIBuilderUssNavigator.UssPreviewNavigator");
+var session = navigator.GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var selected = access.GetType().GetProperty("SelectedElement", flags);
+var original = selected.GetValue(access, null);
+var textProperty = access.GetType().GetProperty("FullUxmlText", flags);
+string originalText = (string)textProperty.GetValue(access, null);
+var root = window.rootVisualElement;
+var uxml = UnityEngine.UIElements.UQueryExtensions.Q<UnityEditor.UIElements.ToolbarSearchField>(root, "uxml-navigator-find", null);
+var uss = UnityEngine.UIElements.UQueryExtensions.Q<UnityEditor.UIElements.ToolbarSearchField>(root, "uss-navigator-find", null);
+string oldUxml = uxml.value;
+string oldUss = uss.value;
+string clipboard = UnityEditor.EditorGUIUtility.systemCopyBuffer;
+var count = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(root, "uxml-navigator-find-count", null);
+var ussCount = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Label>(root, "uss-navigator-find-count", null);
+var input = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.TextField>(uxml);
+System.Action<UnityEngine.KeyCode, UnityEngine.EventModifiers> key = (code, modifiers) =>
+{
+    using (var evt = UnityEngine.UIElements.KeyDownEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.KeyDown, keyCode = code, modifiers = modifiers }))
+    {
+        evt.target = input;
+        input.SendEvent(evt);
+    }
+};
+try
+{
+    uxml.value = "Label";
+    uss.value = "padding";
+    int total = int.Parse(count.text.Split('/')[1]);
+    if (total < 2 || count.text != "1/" + total) throw new System.Exception("当前页面需至少两个 Label 命中");
+    string rightCount = ussCount.text;
+    key(UnityEngine.KeyCode.Return, UnityEngine.EventModifiers.None);
+    if (count.text != "2/" + total) throw new System.Exception("Enter 没有恰好前进一个命中");
+    key(UnityEngine.KeyCode.Return, UnityEngine.EventModifiers.Shift);
+    if (count.text != "1/" + total) throw new System.Exception("Shift+Enter 没有回到上一个命中");
+    key(UnityEngine.KeyCode.KeypadEnter, UnityEngine.EventModifiers.Shift);
+    if (count.text != total + "/" + total) throw new System.Exception("首尾循环或小键盘 Enter 失败");
+    if (ussCount.text != rightCount) throw new System.Exception("左侧搜索改变了右侧查询状态");
+    uxml.value = "__search_no_such_token_8431__";
+    if (count.text != "0/0") throw new System.Exception("无结果计数错误");
+    var next = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Button>(root, "uxml-navigator-find-next", null);
+    if (next.enabledSelf) throw new System.Exception("无结果时仍启用下一项");
+    key(UnityEngine.KeyCode.Escape, UnityEngine.EventModifiers.None);
+    if (uxml.value != "" || count.text != "0/0" || uss.value != "padding")
+        throw new System.Exception("Esc 没有仅清空当前侧搜索");
+    var preview = session.GetType().GetField("uss", flags).GetValue(session);
+    if ((bool)preview.GetType().GetField("hasRange", flags).GetValue(preview))
+    {
+        preview.GetType().GetMethod("CopyRule", flags).Invoke(preview, null);
+        if (UnityEditor.EditorGUIUtility.systemCopyBuffer.Contains("<mark=#"))
+            throw new System.Exception("复制定位规则混入搜索标记");
+    }
+    if (!object.ReferenceEquals(original, selected.GetValue(access, null))) throw new System.Exception("搜索替换了页面元素选择");
+    if (originalText != (string)textProperty.GetValue(access, null)) throw new System.Exception("搜索改变了内存文档");
+    return "PASS Enter、Shift+Enter、小键盘 Enter、首尾循环、两侧隔离、无结果禁用、Esc 清空、原生选择与文档保留";
+}
+finally
+{
+    uxml.value = oldUxml;
+    uss.value = oldUss;
+    UnityEditor.EditorGUIUtility.systemCopyBuffer = clipboard;
+}

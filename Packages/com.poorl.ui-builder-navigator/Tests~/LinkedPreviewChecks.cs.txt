@@ -1,0 +1,114 @@
+// 通过 Unity MCP execute_code 在已打开 UI Builder、已选中页面元素时运行。
+// 使用真实页面与原生选择通知验证双预览关系，不保存文档、不修改页面资产。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = System.Array.Find(UnityEngine.Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>(),
+    item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var assembly = System.AppDomain.CurrentDomain.GetAssemblies().First(item => item.GetName().Name == "UIBuilderUssNavigator.Editor");
+var navigator = assembly.GetType("UIBuilderUssNavigator.UssPreviewNavigator");
+var session = navigator.GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var styles = session.GetType().GetField("relatedStyles", flags).GetValue(session);
+var uxml = session.GetType().GetField("uxml", flags).GetValue(session);
+var uss = session.GetType().GetField("uss", flags).GetValue(session);
+var visibility = uxml.GetType().GetField("locationVisible", flags);
+var selectedProperty = access.GetType().GetProperty("SelectedElement", flags);
+var original = (UnityEngine.UIElements.VisualElement)selectedProperty.GetValue(access, null);
+var textProperty = access.GetType().GetProperty("FullUxmlText", flags);
+string originalText = (string)textProperty.GetValue(access, null);
+var entries = ((System.Collections.IEnumerable)styles.GetType().GetMethod("GetEntries", flags)
+    .Invoke(styles, new object[] { original })).Cast<object>().ToArray();
+var entry = entries.FirstOrDefault(item => ((string)item.GetType().GetField("Label", flags).GetValue(item)).StartsWith(".heading "))
+    ?? entries.Last(item => (bool)item.GetType().GetField("CanNavigate", flags).GetValue(item));
+var navigate = styles.GetType().GetMethod("Navigate", flags);
+var refresh = session.GetType().GetMethod("Refresh", flags);
+var selection = window.GetType().GetProperty("selection", flags).GetValue(window, null);
+var select = selection.GetType().GetMethod("Select", flags);
+var logs = new System.Collections.Generic.List<string>();
+var getProperty = typeof(UnityEngine.UIElements.VisualElement).GetMethod("GetProperty", flags);
+var row = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, null, (string)null)
+    .ToList().FirstOrDefault(item => object.ReferenceEquals(getProperty.Invoke(item,
+        new object[] { new UnityEngine.PropertyName("__unity-ui-builder-explorer-item-link") }), original)) ?? original;
+// Hierarchy 行可能因折叠/虚拟化尚未创建；此时从同一元素的画布节点发送真实事件。
+try
+{
+    using (var evt = UnityEngine.UIElements.PointerDownEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseDown, button = 1, mousePosition = row.worldBound.center }))
+    {
+        evt.target = row;
+        row.SendEvent(evt);
+    }
+    using (var evt = UnityEngine.UIElements.PointerUpEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseUp, button = 1, mousePosition = row.worldBound.center }))
+    {
+        evt.target = row;
+        row.SendEvent(evt);
+    }
+    refresh.Invoke(session, null);
+    if (!(bool)visibility.GetValue(uxml)) throw new System.Exception("右键菜单清除了元素标签高亮");
+    logs.Add("PASS 右键保留 UXML 定位");
+
+    foreach (var item in entries.Where(item => (bool)item.GetType().GetField("CanNavigate", flags).GetValue(item)))
+    {
+        navigate.Invoke(styles, new object[] { item });
+        refresh.Invoke(session, null);
+        if (!object.ReferenceEquals(selectedProperty.GetValue(access, null), original))
+            throw new System.Exception("查看相关样式替换了正在编辑的元素");
+        if (!(bool)visibility.GetValue(uxml) || !(bool)visibility.GetValue(uss))
+            throw new System.Exception("UXML 与 USS 未同时保持定位");
+        var locator = styles.GetType().GetField("ruleList", flags).GetValue(styles);
+        var target = (UnityEngine.UIElements.VisualElement)locator.GetType().GetField("target", flags).GetValue(locator);
+        var tree = (UnityEngine.UIElements.TreeView)locator.GetType().GetField("tree", flags).GetValue(locator);
+        if (target == null || tree.selectedIndices.Any(index => object.ReferenceEquals(tree.GetItemDataForIndex<UnityEngine.UIElements.VisualElement>(index), target)))
+            throw new System.Exception("样式列表没有独立定位，或错误地使用了原生选择");
+    }
+    logs.Add("PASS 切换所有相关规则时保留原生元素选择与双预览高亮");
+    logs.Add("PASS 样式列表独立定位，不伪造原生 selector 选择");
+
+    var selectorNodes = (System.Collections.IDictionary)styles.GetType().GetMethod("GetSelectorNodes", flags).Invoke(styles, null);
+    var selectorNode = selectorNodes[entry.GetType().GetField("Selector", flags).GetValue(entry)];
+    select.Invoke(selection, new object[] { null, selectorNode });
+    refresh.Invoke(session, null);
+    if (!(bool)visibility.GetValue(uxml)) throw new System.Exception("查看原生样式规则清除了页面元素上下文");
+    select.Invoke(selection, new object[] { null, original });
+    navigate.Invoke(styles, new object[] { entry });
+    logs.Add("PASS 原生样式选择也保留最后的页面元素标签");
+
+    var code = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ListView>(
+        window.rootVisualElement, "uss-navigator-lines", (string)null);
+    using (var evt = UnityEngine.UIElements.PointerDownEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseDown, button = 0 }))
+    {
+        evt.target = code;
+        code.SendEvent(evt);
+    }
+    using (var evt = UnityEngine.UIElements.PointerUpEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseUp, button = 0 }))
+    {
+        evt.target = code;
+        code.SendEvent(evt);
+    }
+    refresh.Invoke(session, null);
+    if (!(bool)visibility.GetValue(uxml) || (bool)visibility.GetValue(uss))
+        throw new System.Exception("取消 USS 临时提示影响了 UXML 元素定位");
+    logs.Add("PASS 点击仅取消 USS 临时提示，UXML 元素定位保留");
+
+    var documentRoot = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+    var other = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(documentRoot, null, (string)null)
+        .ToList().First(item => !object.ReferenceEquals(item, original) && getProperty.Invoke(item,
+            new object[] { new UnityEngine.PropertyName("__unity-ui-builder-linked-visual-element-asset") }) != null);
+    select.Invoke(selection, new object[] { null, other });
+    refresh.Invoke(session, null);
+    if (!(bool)visibility.GetValue(uxml) || (bool)visibility.GetValue(uss))
+        throw new System.Exception("切换元素后保留了旧元素的相关规则");
+    logs.Add("PASS 改选元素更新 UXML 并撤销旧元素的相关规则");
+}
+finally
+{
+    select.Invoke(selection, new object[] { null, original });
+    navigate.Invoke(styles, new object[] { entry });
+}
+if ((string)textProperty.GetValue(access, null) != originalText)
+    throw new System.Exception("交互检查改变了页面 UXML 内容");
+logs.Add("PASS 页面内存内容保持一致");
+return string.Join("\n", logs.ToArray());

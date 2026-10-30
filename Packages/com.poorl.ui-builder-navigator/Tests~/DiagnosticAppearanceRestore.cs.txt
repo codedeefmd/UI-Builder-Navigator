@@ -1,0 +1,32 @@
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var state = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "diagnostic-appearance-state");
+var saved = (object[])state.userData;
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var selection = window.GetType().GetProperty("selection", flags).GetValue(window, null);
+// 若用户已主动改选，则保留新选择；只撤销本次测试仍持有的选择。
+if (object.ReferenceEquals(saved[1], access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)))
+{
+    if (saved[0] == null) selection.GetType().GetMethod("ClearSelection", flags).Invoke(selection, new object[] { null, false });
+    else selection.GetType().GetMethod("Select", flags).Invoke(selection, new object[] { null, saved[0] });
+}
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var comparison = box.GetType().GetField("comparison", flags).GetValue(box);
+((UnityEngine.UIElements.Foldout)box.GetType().GetField("root", flags).GetValue(box)).value = (bool)saved[2];
+((UnityEngine.UIElements.Foldout)comparison.GetType().GetProperty("Element", flags).GetValue(comparison, null)).value = (bool)saved[3];
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var body = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+body.scrollOffset = (Vector2)saved[4];
+var source = session.GetType().GetField("styleSources", flags).GetValue(session);
+((UnityEngine.UIElements.Foldout)source.GetType().GetField("root", flags).GetValue(source)).value = (bool)saved[5];
+tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { saved[9] });
+state.RemoveFromHierarchy();
+session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+if (!Equals(saved[7], access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) ||
+    !Equals(saved[8], access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)))
+    throw new Exception("截图检查期间页面内存内容发生变化");
+return "原选择与面板浏览状态已恢复，页面内存内容保持";

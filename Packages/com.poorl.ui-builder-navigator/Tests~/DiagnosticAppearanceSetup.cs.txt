@@ -1,0 +1,38 @@
+// 临时选中当前文档的 primary 按钮查看实际面板；DiagnosticAppearanceRestore 恢复原选择与浏览状态。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var comparison = box.GetType().GetField("comparison", flags).GetValue(box);
+var comparisonRoot = (UnityEngine.UIElements.Foldout)comparison.GetType().GetProperty("Element", flags).GetValue(comparison, null);
+var boxRoot = (UnityEngine.UIElements.Foldout)box.GetType().GetField("root", flags).GetValue(box);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var body = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var source = session.GetType().GetField("styleSources", flags).GetValue(session);
+var sourceRoot = (UnityEngine.UIElements.Foldout)source.GetType().GetField("root", flags).GetValue(source);
+var sourceScroll = body;
+var doc = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var element = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Button>(doc, null, (string)null).ToList()
+    .First(candidate => candidate.ClassListContains("primary"));
+var state = new UnityEngine.UIElements.VisualElement { name = "diagnostic-appearance-state" };
+state.style.display = UnityEngine.UIElements.DisplayStyle.None;
+state.userData = new object[] {
+    access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null), element,
+    boxRoot.value, comparisonRoot.value, body.scrollOffset, sourceRoot.value, sourceScroll.scrollOffset,
+    access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null),
+    tabs.GetType().GetProperty("DiagnosticsVisible", flags).GetValue(tabs, null)
+};
+window.rootVisualElement.Add(state);
+var selection = window.GetType().GetProperty("selection", flags).GetValue(window, null);
+selection.GetType().GetMethod("Select", flags).Invoke(selection, new object[] { null, element });
+tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+boxRoot.value = true;
+comparisonRoot.value = true;
+sourceRoot.value = true;
+session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+return "已选中示例并展开诊断面板；结束后执行 DiagnosticAppearanceRestore";

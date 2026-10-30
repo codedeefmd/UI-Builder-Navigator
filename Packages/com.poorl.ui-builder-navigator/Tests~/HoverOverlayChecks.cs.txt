@@ -1,0 +1,64 @@
+// Unity MCP execute_code 的方法体：打开 UI Builder 并选中页面元素后运行。
+// 用 panel.Pick + 真实 PointerMoveEvent 路由验证四层命中，避免直接调用 Hover 掩盖拾取问题。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = UnityEngine.Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var assembly = System.AppDomain.CurrentDomain.GetAssemblies().First(item => item.GetName().Name == "UIBuilderUssNavigator.Editor");
+var navigator = assembly.GetType("UIBuilderUssNavigator.UssPreviewNavigator");
+var session = navigator.GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var overlayRoot = (UnityEngine.UIElements.VisualElement)overlay.GetType().GetField("root", flags).GetValue(overlay);
+var selected = access.GetType().GetProperty("SelectedElement", flags);
+var original = (UnityEngine.UIElements.VisualElement)selected.GetValue(access, null);
+if (original == null) throw new System.Exception("先选中页面元素，等待盒模型布局后再运行");
+var text = access.GetType().GetProperty("FullUxmlText", flags);
+string before = (string)text.GetValue(access, null);
+var uxml = session.GetType().GetField("uxml", flags).GetValue(session);
+var uss = session.GetType().GetField("uss", flags).GetValue(session);
+var visible = uxml.GetType().GetField("locationVisible", flags);
+bool uxmlVisible = (bool)visible.GetValue(uxml);
+bool ussVisible = (bool)visible.GetValue(uss);
+var diagram = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("diagram", flags).GetValue(box);
+var content = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("content", flags).GetValue(box);
+var border = box.GetType().GetField("border", flags).GetValue(box);
+var padding = box.GetType().GetField("padding", flags).GetValue(box);
+var borderElement = (UnityEngine.UIElements.VisualElement)border.GetType().GetProperty("Element", flags).GetValue(border, null);
+var paddingElement = (UnityEngine.UIElements.VisualElement)padding.GetType().GetProperty("Element", flags).GetValue(padding, null);
+var layers = new[] { diagram, borderElement, paddingElement, content, paddingElement, borderElement, diagram };
+var names = new[] { "Margin", "Border", "Padding", "Content", "Padding", "Border", "Margin" };
+for (int i = 0; i < layers.Length; i++)
+{
+    var bounds = layers[i].worldBound;
+    var point = i == 3 ? bounds.center : new UnityEngine.Vector2(bounds.xMin + 10, bounds.center.y);
+    var hit = window.rootVisualElement.panel.Pick(point);
+    using (var evt = UnityEngine.UIElements.PointerMoveEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseMove, mousePosition = point }))
+    {
+        evt.target = hit;
+        hit.SendEvent(evt);
+    }
+    string hovered = box.GetType().GetField("hovered", flags).GetValue(box).ToString();
+    if (hovered != names[i]) throw new System.Exception("拾取错误：" + names[i] + " → " + hovered + ", hit=" + hit);
+    if (overlayRoot.style.display.value != UnityEngine.UIElements.DisplayStyle.Flex)
+        throw new System.Exception("悬停后画布覆盖层未显示");
+    var pageHit = window.rootVisualElement.panel.Pick(original.worldBound.center);
+    if (pageHit == overlayRoot || overlayRoot.Contains(pageHit)) throw new System.Exception("覆盖层拦截了画布拾取");
+}
+using (var evt = UnityEngine.UIElements.PointerLeaveEvent.GetPooled(new UnityEngine.Event
+    { type = UnityEngine.EventType.MouseMove }))
+{
+    evt.target = diagram;
+    diagram.SendEvent(evt);
+}
+session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+if (box.GetType().GetField("hovered", flags).GetValue(box) != null ||
+    overlayRoot.style.display.value != UnityEngine.UIElements.DisplayStyle.None)
+    throw new System.Exception("移出后残留悬停覆盖层，或轮询重新点亮它");
+if (!object.ReferenceEquals(original, selected.GetValue(access, null))) throw new System.Exception("悬停改变了原生选择");
+if (before != (string)text.GetValue(access, null)) throw new System.Exception("悬停改变了内存文档");
+if (uxmlVisible != (bool)visible.GetValue(uxml) || ussVisible != (bool)visible.GetValue(uss))
+    throw new System.Exception("悬停改变了 UXML/USS 代码定位状态");
+return "PASS 四层真实拾取、内层返回外层、画布鼠标穿透、移出隐藏、轮询不重现、原生选择/文档/双预览定位不变";

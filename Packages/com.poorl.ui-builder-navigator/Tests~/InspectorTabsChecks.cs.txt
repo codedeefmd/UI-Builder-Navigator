@@ -1,0 +1,110 @@
+// 在已打开的 UI Builder 上检查页签边界。临时容器仅挂在编辑器视觉树，finally 释放，不保存资源。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var type = tabs.GetType();
+var show = type.GetMethod("ShowDiagnostics", flags);
+var visible = type.GetProperty("DiagnosticsVisible", flags);
+var originalTab = visible.GetValue(tabs, null);
+var native = (UnityEngine.UIElements.VisualElement)type.GetField("nativePage", flags).GetValue(tabs);
+var scroll = (UnityEngine.UIElements.ScrollView)type.GetField("diagnosticPage", flags).GetValue(tabs);
+var propertiesToggle = (UnityEditor.UIElements.ToolbarToggle)type.GetField("propertiesTab", flags).GetValue(tabs);
+var diagnosticsToggle = (UnityEditor.UIElements.ToolbarToggle)type.GetField("diagnosticsTab", flags).GetValue(tabs);
+var nativeChildren = native.hierarchy.Children().ToArray();
+var nativeScroll = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(native, "inspector-scroll-view");
+var nativeOffset = nativeScroll.scrollOffset;
+var diagnosticOffset = scroll.scrollOffset;
+var selection = access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null);
+var beforeUxml = access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+var beforeUss = access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var owner = overlay.GetType().GetField("owner", flags);
+var source = session.GetType().GetField("styleSources", flags).GetValue(session);
+var refresh = session.GetType().GetMethod("Refresh", flags);
+var logs = new System.Collections.Generic.List<string>();
+Action<bool, string> check = (passed, message) => { if (!passed) throw new Exception(message); };
+var probe = new UnityEngine.UIElements.VisualElement { name = "inspector-tabs-lifecycle-test" };
+probe.style.position = UnityEngine.UIElements.Position.Absolute;
+probe.style.left = -10000f;
+var first = new UnityEngine.UIElements.VisualElement { name = "native-header-probe" };
+first.style.display = UnityEngine.UIElements.DisplayStyle.None;
+var second = new UnityEngine.UIElements.ScrollView { name = "native-content-probe" };
+second.style.flexGrow = 1f;
+probe.Add(first);
+probe.Add(second);
+window.rootVisualElement.Add(probe);
+object isolated = null;
+try
+{
+    check(UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.ScrollView>(scroll.contentContainer, null, (string)null)
+        .ToList().Count == 0, "诊断页仍包含嵌套 ScrollView");
+    check(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(scroll, "uss-navigator-box-model") != null &&
+        UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(scroll, "uss-navigator-style-sources") != null,
+        "两项诊断未归入第二页");
+    show.Invoke(tabs, new object[] { false });
+    check(native.style.display.value == UnityEngine.UIElements.DisplayStyle.Flex &&
+        scroll.style.display.value == UnityEngine.UIElements.DisplayStyle.None, "属性页未独占显示");
+    propertiesToggle.value = false;
+    check(propertiesToggle.value && !diagnosticsToggle.value, "重复点击属性页取消了单选");
+    var previousRows = source.GetType().GetField("rows", flags).GetValue(source);
+    refresh.Invoke(session, null);
+    check(ReferenceEquals(previousRows, source.GetType().GetField("rows", flags).GetValue(source)), "隐藏页仍重建来源链");
+    diagnosticsToggle.value = true;
+    check((bool)visible.GetValue(tabs, null) && !propertiesToggle.value && diagnosticsToggle.value &&
+        native.style.display.value == UnityEngine.UIElements.DisplayStyle.None, "诊断页未独占显示");
+    diagnosticsToggle.value = false;
+    check(diagnosticsToggle.value && !propertiesToggle.value, "重复点击诊断页取消了单选");
+    logs.Add("PASS 两页互斥、重复点击单选、隐藏来源不查询、诊断仅一个外层滚动区");
+
+    var element = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("inspectedElement", flags).GetValue(box);
+    check(element != null, "需要一个已选中的页面元素来验证覆盖层");
+    foreach (string method in new[] { "ShowInspection", "ShowLayout" })
+    {
+        // 布局高亮由盒模型协调器持有；不能绕过其 hovered 状态直接注入覆盖层。
+        if (method == "ShowLayout") box.GetType().GetMethod("HoverLayout", flags).Invoke(box, new object[] { true });
+        else overlay.GetType().GetMethod(method, flags).Invoke(overlay, new object[] { element });
+        show.Invoke(tabs, new object[] { false });
+        check(owner.GetValue(overlay).ToString() == "None", "切页残留覆盖层：" + method);
+        show.Invoke(tabs, new object[] { true });
+        check(owner.GetValue(overlay).ToString() == "None", "切回诊断自动重现旧覆盖层");
+    }
+    var diagram = box.GetType().GetField("diagram", flags).GetValue(box);
+    box.GetType().GetMethod("Hover", flags).Invoke(box, new object[] { diagram });
+    show.Invoke(tabs, new object[] { false });
+    check(owner.GetValue(overlay).ToString() == "None", "切页残留盒模型覆盖层");
+    logs.Add("PASS 盒模型、父子范围、Viewport 三种高亮均随切页释放且不自动重现");
+
+    isolated = Activator.CreateInstance(type, flags, null, new object[] { probe }, null);
+    show.Invoke(isolated, new object[] { true });
+    show.Invoke(isolated, new object[] { false });
+    ((IDisposable)isolated).Dispose();
+    isolated = null;
+    check(probe.hierarchy.childCount == 2 && ReferenceEquals(probe.hierarchy[0], first) && ReferenceEquals(probe.hierarchy[1], second),
+        "Dispose 未恢复原生直接子节点及顺序");
+    check(first.style.display.value == UnityEngine.UIElements.DisplayStyle.None && second.style.flexGrow.value == 1f,
+        "切页改写了原生子节点内联样式");
+    logs.Add("PASS 独立生命周期恢复原生节点身份、直接层级、顺序和内联样式");
+
+    check(nativeChildren.SequenceEqual(native.hierarchy.Children()), "真实原生控件被替换或重排");
+    check(nativeScroll.scrollOffset == nativeOffset, "切页改变了原生属性滚动位置");
+    check(ReferenceEquals(selection, access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "切页改变了原生选择");
+    check(Equals(beforeUxml, access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) &&
+        Equals(beforeUss, access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "切页改变了内存文档");
+    logs.Add("PASS 原生控件、选择、属性滚动和内存 UXML/USS 保持");
+    return logs;
+}
+finally
+{
+    if (isolated != null) ((IDisposable)isolated).Dispose();
+    probe.RemoveFromHierarchy();
+    show.Invoke(tabs, new object[] { originalTab });
+    // 独立实例也使用本次 Editor 的页签偏好；恢复真实页签的偏好，避免测试影响重载后的选择。
+    UnityEditor.SessionState.SetBool("UIBuilderUssNavigator.InspectorDiagnostics", (bool)originalTab);
+    scroll.scrollOffset = diagnosticOffset;
+}

@@ -1,0 +1,141 @@
+namespace UIBuilderUssNavigator
+{
+    public static class UssRuleLocatorTestHarness
+    {
+        private static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            ExactSelectorDoesNotMatchPrefixOrDeclaration();
+            FindsRepeatedOccurrences();
+            SupportsGroupedAndMultilineSelectors();
+            DistinguishesDescendantAndChildCombinators();
+            SupportsPseudoSelectors();
+            IgnoresCommentsStringsAndEscapedQuotes();
+            SkipsImportsAndCountsCrLfLines();
+            HandlesMissingAndInvalidArguments();
+            RejectsUnclosedBlocks();
+
+            return "PASS " + assertions + " assertions";
+        }
+
+        private static void ExactSelectorDoesNotMatchPrefixOrDeclaration()
+        {
+            const string uss =
+                ".button-primary { color: red; }\n" +
+                ".holder { content: \".button\"; }\n" +
+                ".button {\n  color: blue;\n}\n";
+
+            AssertRange(uss, ".button", 0, 2, 4);
+            AssertMissing(uss, ".but");
+        }
+
+        private static void FindsRepeatedOccurrences()
+        {
+            const string uss = ".item { a: 1; }\n.other { a: 2; }\n.item { a: 3; }";
+            AssertRange(uss, ".item", 0, 0, 0);
+            AssertRange(uss, ".item", 1, 2, 2);
+            AssertMissing(uss, ".item", 2);
+        }
+
+        private static void SupportsGroupedAndMultilineSelectors()
+        {
+            const string uss =
+                ".first,\n" +
+                ".panel   >\n" +
+                "   .action:hover,\n" +
+                ".last {\n" +
+                "  color: white;\n" +
+                "}";
+
+            AssertRange(uss, ".panel>.action:hover", 0, 0, 5);
+            AssertRange(uss, ".last", 0, 0, 5);
+        }
+
+        private static void DistinguishesDescendantAndChildCombinators()
+        {
+            const string uss = ".tree .leaf { x: 1; }\n.tree > .leaf { x: 2; }";
+            AssertRange(uss, ".tree .leaf", 0, 0, 0);
+            AssertRange(uss, ".tree>.leaf", 0, 1, 1);
+        }
+
+        private static void SupportsPseudoSelectors()
+        {
+            const string uss = "Button:hover { opacity: 0.8; }\nButton:active { opacity: 1; }";
+            AssertRange(uss, "Button:hover", 0, 0, 0);
+            AssertMissing(uss, "Button");
+        }
+
+        private static void IgnoresCommentsStringsAndEscapedQuotes()
+        {
+            const string uss =
+                "/* .fake { color: red; } */\n" +
+                ".real {\n" +
+                "  content: \"brace } and .fake { and \\\"quote\\\"\";\n" +
+                "  note: 'still } here';\n" +
+                "}\n" +
+                ".after { value: 1; }";
+
+            AssertMissing(uss, ".fake");
+            AssertRange(uss, ".real", 0, 1, 4);
+            AssertRange(uss, ".after", 0, 5, 5);
+        }
+
+        private static void SkipsImportsAndCountsCrLfLines()
+        {
+            const string uss =
+                "@import url(\"base.uss\");\r\n" +
+                "\r\n" +
+                "/* heading */\r\n" +
+                ".target {\r\n" +
+                "  color: green;\r\n" +
+                "}\r\n";
+
+            AssertRange(uss, ".target", 0, 3, 5);
+        }
+
+        private static void HandlesMissingAndInvalidArguments()
+        {
+            AssertMissing(".a { x: 1; }", ".missing");
+            AssertMissing(null, ".a");
+            AssertMissing(".a { x: 1; }", " ");
+
+            RuleRange range;
+            Assert(!UssRuleLocator.TryFind(".a { x: 1; }", ".a", -1, out range), "negative occurrence");
+        }
+
+        private static void RejectsUnclosedBlocks()
+        {
+            AssertMissing(".broken { color: red;", ".broken");
+            AssertMissing("/* unclosed comment .fake { */", ".fake");
+        }
+
+        private static void AssertRange(string uss, string selector, int occurrence, int startLine, int endLine)
+        {
+            RuleRange range;
+            bool found = UssRuleLocator.TryFind(uss, selector, occurrence, out range);
+            Assert(found, "Expected selector '" + selector + "' occurrence " + occurrence + " to be found.");
+            Assert(range.StartLine == startLine,
+                "Selector '" + selector + "' start line: expected " + startLine + ", actual " + range.StartLine + ".");
+            Assert(range.EndLine == endLine,
+                "Selector '" + selector + "' end line: expected " + endLine + ", actual " + range.EndLine + ".");
+        }
+
+        private static void AssertMissing(string uss, string selector, int occurrence = 0)
+        {
+            RuleRange range;
+            Assert(!UssRuleLocator.TryFind(uss, selector, occurrence, out range),
+                "Expected selector '" + selector + "' occurrence " + occurrence + " to be absent.");
+        }
+
+        private static void Assert(bool condition, string message)
+        {
+            assertions++;
+            if (!condition)
+            {
+                throw new System.InvalidOperationException("Assertion " + assertions + " failed: " + message);
+            }
+        }
+    }
+}

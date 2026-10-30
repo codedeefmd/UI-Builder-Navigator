@@ -1,0 +1,85 @@
+// Unity MCP execute_code 方法体：检查真实 Viewport 鼠标事件，不选择元素、不保存文档。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = UnityEngine.Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var assembly = System.AppDomain.CurrentDomain.GetAssemblies().First(item => item.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = assembly.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var hover = session.GetType().GetField("viewportHover", flags).GetValue(session);
+var viewport = (UnityEngine.UIElements.VisualElement)access.GetType().GetProperty("Viewport", flags).GetValue(access, null);
+var overlay = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(viewport, "box-model-canvas-overlay", null);
+var document = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var selectedProperty = access.GetType().GetProperty("SelectedElement", flags);
+var selected = selectedProperty.GetValue(access, null);
+string uxmlText = (string)access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+string ussText = (string)access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var uxml = session.GetType().GetField("uxml", flags).GetValue(session);
+var uss = session.GetType().GetField("uss", flags).GetValue(session);
+var visibility = uxml.GetType().GetField("locationVisible", flags);
+bool uxmlVisible = (bool)visibility.GetValue(uxml);
+bool ussVisible = (bool)visibility.GetValue(uss);
+var candidates = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Label>(document).ToList()
+    .Where(item => viewport.worldBound.Contains(item.worldBound.center)).Take(2).ToArray();
+if (candidates.Length < 2) throw new System.Exception("页面需至少两个可见 Label 供检查");
+System.Action<UnityEngine.Vector2, int> move = (point, buttons) =>
+{
+    var hit = window.rootVisualElement.panel.Pick(point);
+    using (var evt = UnityEngine.UIElements.MouseMoveEvent.GetPooled(new UnityEngine.Event
+        { type = UnityEngine.EventType.MouseMove, mousePosition = point }))
+    {
+        // 仅给测试事件设置按键状态，不改变操作系统鼠标状态，也不启动原生拖拽。
+        typeof(UnityEngine.UIElements.MouseMoveEvent).GetProperty("pressedButtons", flags).SetValue(evt, buttons, null);
+        evt.target = hit;
+        hit.SendEvent(evt);
+    }
+};
+var nativeViewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var setPreview = nativeViewport.GetType().GetMethod("SetPreviewMode", flags);
+bool originalPreview = (bool)access.GetType().GetProperty("IsPreviewEnabled", flags).GetValue(access, null);
+try
+{
+    if (originalPreview) setPreview.Invoke(nativeViewport, new object[] { false });
+    foreach (var item in candidates)
+    {
+        move(item.worldBound.center, 0);
+        if (overlay.style.display.value != UnityEngine.UIElements.DisplayStyle.Flex)
+            throw new System.Exception("Viewport 悬停未显示信息");
+        var nativeHit = access.GetType().GetMethod("PickViewportElement", flags).Invoke(access, new object[] { item.worldBound.center });
+        if (!object.ReferenceEquals(nativeHit, hover.GetType().GetField("target", flags).GetValue(hover)))
+            throw new System.Exception("悬停目标与原生拾取不一致");
+        session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+        if (overlay.style.display.value != UnityEngine.UIElements.DisplayStyle.Flex)
+            throw new System.Exception("轮询或未选择元素时清掉了悬停信息");
+        var hit = window.rootVisualElement.panel.Pick(item.worldBound.center);
+        if (hit == overlay || overlay.Contains(hit)) throw new System.Exception("信息层阻挡鼠标拾取");
+    }
+    move(candidates[0].worldBound.center, 1);
+    if (overlay.style.display.value != UnityEngine.UIElements.DisplayStyle.None)
+        throw new System.Exception("拖动状态仍显示信息");
+    move(candidates[0].worldBound.center, 0);
+    using (var evt = UnityEngine.UIElements.MouseLeaveEvent.GetPooled(new UnityEngine.Event { type = UnityEngine.EventType.MouseLeaveWindow }))
+    {
+        evt.target = viewport;
+        viewport.SendEvent(evt);
+    }
+    session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+    if (overlay.style.display.value != UnityEngine.UIElements.DisplayStyle.None)
+        throw new System.Exception("移出后仍显示信息，或轮询重新点亮");
+    setPreview.Invoke(nativeViewport, new object[] { true });
+    move(candidates[0].worldBound.center, 0);
+    if (overlay.style.display.value != UnityEngine.UIElements.DisplayStyle.None)
+        throw new System.Exception("Preview 模式仍显示编辑器调试信息");
+    if (!object.ReferenceEquals(selected, selectedProperty.GetValue(access, null))) throw new System.Exception("悬停改变了选中元素");
+    if (uxmlText != (string)access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null) ||
+        ussText != (string)access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null))
+        throw new System.Exception("悬停改变了文档内容");
+    if (uxmlVisible != (bool)visibility.GetValue(uxml) || ussVisible != (bool)visibility.GetValue(uss))
+        throw new System.Exception("悬停改变了代码定位");
+    return "PASS 原生拾取一致、目标切换、无选中可用、轮询保持、鼠标穿透、拖动隐藏、移出隐藏、Preview 排除、选中/文档/双预览保持";
+}
+finally
+{
+    setPreview.Invoke(nativeViewport, new object[] { originalPreview });
+    hover.GetType().GetMethod("Clear", flags).Invoke(hover, null);
+}

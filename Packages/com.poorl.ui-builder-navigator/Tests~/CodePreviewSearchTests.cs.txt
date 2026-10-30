@@ -1,0 +1,193 @@
+namespace UIBuilderUssNavigator
+{
+    public static class CodePreviewSearchTestHarness
+    {
+        readonly struct MarkedColumn
+        {
+            internal readonly int Column;
+            internal readonly string Color;
+
+            internal MarkedColumn(int column, string color)
+            {
+                Column = column;
+                Color = color;
+            }
+        }
+
+        static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            FindsLiteralMatches();
+            UsesNonOverlappingUtf16Columns();
+            ReturnsNoMatchesForEmptyQuery();
+            MarksAcrossSyntaxTokens();
+            MarksRepeatedAndActiveMatches();
+            PreservesRichLookingSourceAndUnicode();
+            return "PASS " + assertions + " assertions";
+        }
+
+        static void FindsLiteralMatches()
+        {
+            var matches = CodePreviewSearch.FindMatches(
+                new[] { "Alpha alpha ALPHA", "none" }, "aLpHa");
+            Equal(3, matches.Count, "case-insensitive count");
+            Match(matches[0], 0, 0, 5, "first match");
+            Match(matches[1], 0, 6, 5, "second match");
+            Match(matches[2], 0, 12, 5, "third match");
+
+            matches = CodePreviewSearch.FindMatches(new[] { "中文中文" }, "中文");
+            Equal(2, matches.Count, "CJK count");
+            Match(matches[0], 0, 0, 2, "first CJK");
+            Match(matches[1], 0, 2, 2, "second CJK");
+        }
+
+        static void UsesNonOverlappingUtf16Columns()
+        {
+            var matches = CodePreviewSearch.FindMatches(new[] { "aaaa" }, "aa");
+            Equal(2, matches.Count, "non-overlapping count");
+            Match(matches[0], 0, 0, 2, "first non-overlap");
+            Match(matches[1], 0, 2, 2, "second non-overlap");
+
+            matches = CodePreviewSearch.FindMatches(new[] { "😀x😀" }, "😀");
+            Equal(2, matches.Count, "surrogate pair count");
+            Match(matches[0], 0, 0, 2, "first surrogate pair");
+            Match(matches[1], 0, 3, 2, "second surrogate pair UTF16 column");
+        }
+
+        static void ReturnsNoMatchesForEmptyQuery()
+        {
+            Equal(0, CodePreviewSearch.FindMatches(new[] { "abc" }, string.Empty).Count, "empty query");
+            Equal(0, CodePreviewSearch.FindMatches(new[] { "abc" }, null).Count, "null query");
+            Equal(0, CodePreviewSearch.FindMatches(new[] { "abc" }, "xyz").Count, "not found");
+
+            string colored = Colored("abc", "4EC9B0");
+            Equal(colored, CodePreviewSearch.MarkLine(colored, new SearchMatch[0], -1, true), "no matches unchanged");
+        }
+
+        static void MarksAcrossSyntaxTokens()
+        {
+            string source = ".card:hover";
+            string colored = Colored(".card", "4EC9B0") + Colored(":", "D4D4D4") + Colored("hover", "4EC9B0");
+            var matches = CodePreviewSearch.FindMatches(new[] { source }, "CARD:HOVER");
+            string marked = CodePreviewSearch.MarkLine(colored, matches, 1, true);
+
+            var markedColumns = new System.Collections.Generic.List<MarkedColumn>();
+            Equal(source, Decode(marked, markedColumns), "cross-token decode");
+            Equal(10, markedColumns.Count, "cross-token marked UTF16 columns");
+            for (int column = 1; column < 11; column++)
+                HasMarkedColumn(markedColumns, column, "FF8A00AA", "cross-token active " + column);
+            Contains(marked, "<color=#4EC9B0>", "selector color preserved");
+            Contains(marked, "<color=#D4D4D4>", "punctuation color preserved");
+        }
+
+        static void MarksRepeatedAndActiveMatches()
+        {
+            string source = "test TEST test";
+            var matches = CodePreviewSearch.FindMatches(new[] { source }, "test");
+            string dark = CodePreviewSearch.MarkLine(Colored(source, "9CDCFE"), matches, 5, true);
+            var columns = new System.Collections.Generic.List<MarkedColumn>();
+            Equal(source, Decode(dark, columns), "repeated decode");
+            Equal(12, columns.Count, "all repeated characters marked");
+            Equal(8, CountColor(columns, "FFD54F66"), "ordinary dark marks");
+            Equal(4, CountColor(columns, "FF8A00AA"), "active dark mark");
+
+            string light = CodePreviewSearch.MarkLine(Colored(source, "0451A5"), matches, -1, false);
+            columns.Clear();
+            Equal(source, Decode(light, columns), "light decode");
+            Equal(12, CountColor(columns, "FFD54F80"), "ordinary light marks");
+            True(light != dark, "theme mark palettes differ");
+        }
+
+        static void PreservesRichLookingSourceAndUnicode()
+        {
+            string source = "前<mark=red>&</noparse>😀后";
+            string colored = Colored(source, "CE9178");
+            var matches = CodePreviewSearch.FindMatches(new[] { source }, "</noparse>😀");
+            string marked = CodePreviewSearch.MarkLine(colored, matches, matches[0].Column, true);
+            var columns = new System.Collections.Generic.List<MarkedColumn>();
+            Equal(source, Decode(marked, columns), "rich-looking source roundtrip");
+            Equal(matches[0].Length, columns.Count, "special source marked length");
+            for (int index = 0; index < columns.Count; index++)
+                Equal("FF8A00AA", columns[index].Color, "special source active color " + index);
+            Contains(marked, "<color=#CE9178>", "string syntax color preserved");
+        }
+
+        static string Colored(string source, string color)
+        {
+            var result = new System.Text.StringBuilder();
+            result.Append("<color=#").Append(color).Append('>');
+            SyntaxText.AppendLiteral(result, source);
+            result.Append("</color>");
+            return result.ToString();
+        }
+
+        // 解码器只解释高亮器和搜索器生成的外层标签；noparse 内的同名源码保持字面量。
+        static string Decode(string rich, System.Collections.Generic.List<MarkedColumn> markedColumns)
+        {
+            var plain = new System.Text.StringBuilder();
+            bool noParse = false;
+            string markColor = null;
+            int index = 0;
+            while (index < rich.Length)
+            {
+                if (!noParse && StartsWith(rich, index, "<noparse>")) { noParse = true; index += 9; continue; }
+                if (noParse && StartsWith(rich, index, "</noparse>")) { noParse = false; index += 10; continue; }
+                if (!noParse && StartsWith(rich, index, "<color=#")) { index = SkipTag(rich, index); continue; }
+                if (!noParse && StartsWith(rich, index, "</color>")) { index += 8; continue; }
+                if (!noParse && StartsWith(rich, index, "<mark=#"))
+                {
+                    int close = rich.IndexOf('>', index);
+                    markColor = rich.Substring(index + 7, close - index - 7);
+                    index = close + 1;
+                    continue;
+                }
+                if (!noParse && StartsWith(rich, index, "</mark>")) { markColor = null; index += 7; continue; }
+
+                if (noParse && markColor != null)
+                    markedColumns.Add(new MarkedColumn(plain.Length, markColor));
+                plain.Append(rich[index++]);
+            }
+            True(!noParse, "balanced noparse");
+            True(markColor == null, "balanced mark");
+            return plain.ToString();
+        }
+
+        static int SkipTag(string text, int index)
+        {
+            int close = text.IndexOf('>', index);
+            if (close < 0) throw new System.Exception("Malformed generated tag");
+            return close + 1;
+        }
+
+        static bool StartsWith(string text, int index, string value) =>
+            index + value.Length <= text.Length && string.CompareOrdinal(text, index, value, 0, value.Length) == 0;
+
+        static int CountColor(System.Collections.Generic.List<MarkedColumn> columns, string color)
+        {
+            int count = 0;
+            for (int index = 0; index < columns.Count; index++)
+                if (columns[index].Color == color) count++;
+            return count;
+        }
+
+        static void HasMarkedColumn(System.Collections.Generic.List<MarkedColumn> columns, int column, string color, string name)
+        {
+            for (int index = 0; index < columns.Count; index++)
+                if (columns[index].Column == column && columns[index].Color == color) { True(true, name); return; }
+            True(false, name);
+        }
+
+        static void Match(SearchMatch actual, int line, int column, int length, string name)
+        {
+            Equal(line, actual.Line, name + " line");
+            Equal(column, actual.Column, name + " column");
+            Equal(length, actual.Length, name + " length");
+        }
+
+        static void Contains(string actual, string expected, string name) { True(actual.Contains(expected), name); }
+        static void Equal<T>(T expected, T actual, string name) { True(System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual), name + " expected=" + expected + " actual=" + actual); }
+        static void True(bool condition, string name) { assertions++; if (!condition) throw new System.Exception("FAIL " + name); }
+    }
+}

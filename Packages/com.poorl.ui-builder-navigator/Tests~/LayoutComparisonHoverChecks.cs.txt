@@ -1,0 +1,109 @@
+// 检查真实面板拾取/事件、三个入口所有权、Preview/折叠/取消检查，以及只读边界。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var owner = overlay.GetType().GetField("owner", flags);
+var overlayRoot = (UnityEngine.UIElements.VisualElement)overlay.GetType().GetField("root", flags).GetValue(overlay);
+var hover = session.GetType().GetField("viewportHover", flags).GetValue(session);
+var nativeViewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var setPreview = nativeViewport.GetType().GetMethod("SetPreviewMode", flags);
+var comparison = box.GetType().GetField("comparison", flags).GetValue(box);
+var comparisonRoot = (UnityEngine.UIElements.Foldout)comparison.GetType().GetProperty("Element", flags).GetValue(comparison, null);
+var boxRoot = (UnityEngine.UIElements.Foldout)box.GetType().GetField("root", flags).GetValue(box);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var body = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var table = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(comparisonRoot, "layout-comparison-table");
+var diagram = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("diagram", flags).GetValue(box);
+var state = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "layout-comparison-hover-state");
+var saved = (object[])state.userData;
+var element = (UnityEngine.UIElements.VisualElement)saved[7];
+var refresh = session.GetType().GetMethod("Refresh", flags);
+var refreshBox = box.GetType().GetMethod("Refresh", flags);
+Action<bool, string> check = (success, message) => { if (!success) throw new Exception(message); };
+Action tableMove = () =>
+{
+    // 整表可能高于可视区；选实际可见交集内的点，经过 panel.Pick 证明文字/行没有拦截。
+    float top = Mathf.Max(table.worldBound.yMin, body.contentViewport.worldBound.yMin) + 6f;
+    float bottom = Mathf.Min(table.worldBound.yMax, body.contentViewport.worldBound.yMax) - 6f;
+    var point = new Vector2(table.worldBound.center.x, (top + bottom) / 2f);
+    var hit = window.rootVisualElement.panel.Pick(point);
+    check(object.ReferenceEquals(hit, table), "对照表真实拾取失败：" + hit);
+    using (var evt = UnityEngine.UIElements.PointerMoveEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = point }))
+    { evt.target = hit; hit.SendEvent(evt); }
+};
+Action<UnityEngine.UIElements.VisualElement> leave = target =>
+{
+    using (var evt = UnityEngine.UIElements.PointerLeaveEvent.GetPooled(new Event { type = EventType.MouseMove }))
+    { evt.target = target; target.SendEvent(evt); }
+};
+var logs = new System.Collections.Generic.List<string>();
+try
+{
+    body.ScrollTo(table);
+    tableMove();
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "对照表悬停没有取得高亮");
+    refresh.Invoke(session, null);
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "周期刷新丢失父子高亮");
+    var pageHit = window.rootVisualElement.panel.Pick(element.worldBound.center);
+    check(pageHit != overlayRoot && !overlayRoot.Contains(pageHit), "覆盖层拦截了页面拾取");
+    leave(diagram);
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "盒模型迟到的 Leave 清掉了对照");
+    logs.Add("PASS 真实表格拾取、周期保持、迟到离开和画布鼠标穿透");
+    box.GetType().GetMethod("Hover", flags).Invoke(box, new object[] { diagram });
+    leave(table);
+    check(owner.GetValue(overlay).ToString() == "BoxLayer", "表格迟到的 Leave 清掉了盒模型");
+    tableMove();
+    hover.GetType().GetMethod("Clear", flags).Invoke(hover, null);
+    check(owner.GetValue(overlay).ToString() == "LayoutComparison", "Viewport Clear 清掉了对照");
+    var pagePoint = element.worldBound.center;
+    var hitPage = window.rootVisualElement.panel.Pick(pagePoint);
+    using (var evt = UnityEngine.UIElements.MouseMoveEvent.GetPooled(new Event { type = EventType.MouseMove, mousePosition = pagePoint }))
+    { evt.target = hitPage; hitPage.SendEvent(evt); }
+    check(owner.GetValue(overlay).ToString() == "ViewportInspection", "Viewport 未能从对照接管");
+    leave(table);
+    check(owner.GetValue(overlay).ToString() == "ViewportInspection", "旧表格事件清掉了 Viewport");
+    hover.GetType().GetMethod("Clear", flags).Invoke(hover, null);
+    logs.Add("PASS 父子对照、四层盒模型、Viewport 三种入口往返交接");
+    tableMove();
+    setPreview.Invoke(nativeViewport, new object[] { true });
+    refresh.Invoke(session, null);
+    check(owner.GetValue(overlay).ToString() == "None", "Preview 没有清除对照");
+    tableMove();
+    check(owner.GetValue(overlay).ToString() == "None", "Preview 期间又显示对照");
+    setPreview.Invoke(nativeViewport, new object[] { false });
+    refresh.Invoke(session, null);
+    tableMove();
+    comparisonRoot.value = false;
+    check(owner.GetValue(overlay).ToString() == "None", "折叠对照后高亮残留");
+    comparisonRoot.value = true;
+    refresh.Invoke(session, null);
+    check(owner.GetValue(overlay).ToString() == "None", "展开后自动恢复旧悬停");
+    box.GetType().GetMethod("HoverLayout", flags).Invoke(box, new object[] { true });
+    refreshBox.Invoke(box, new object[] { null, false });
+    check(owner.GetValue(overlay).ToString() == "None", "取消元素检查后高亮残留");
+    refreshBox.Invoke(box, new object[] { element, false });
+    logs.Add("PASS Preview 排除、折叠收起、展开不重现和取消元素检查");
+    check(object.ReferenceEquals(saved[0], access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null)), "对照交互改变了原生选择");
+    check(Equals(saved[1], access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null)) &&
+        Equals(saved[2], access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null)), "对照交互改变了内存文档");
+    logs.Add("PASS 原生选择与内存 UXML/USS 保持");
+    return logs;
+}
+finally
+{
+    hover.GetType().GetMethod("Clear", flags).Invoke(hover, null);
+    box.GetType().GetMethod("ClearHover", flags).Invoke(box, null);
+    setPreview.Invoke(nativeViewport, new object[] { saved[6] });
+    comparisonRoot.value = (bool)saved[4];
+    boxRoot.value = (bool)saved[3];
+    body.scrollOffset = (Vector2)saved[5];
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { saved[8] });
+    state.RemoveFromHierarchy();
+    refresh.Invoke(session, null);
+}

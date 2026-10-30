@@ -1,0 +1,35 @@
+// 打开实际 Inspector 的对照表；等布局后运行 LayoutComparisonHoverChecks.cs.txt。
+// 保存原有折叠/滚动/Preview 与选择状态，Checks 的 finally 恢复，未保存文档不写盘。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var element = (UnityEngine.UIElements.VisualElement)box.GetType().GetField("inspectedElement", flags).GetValue(box);
+if (element == null || element.parent == null) throw new Exception("需要先有一个可检查的页面元素");
+var boxRoot = (UnityEngine.UIElements.Foldout)box.GetType().GetField("root", flags).GetValue(box);
+var comparison = box.GetType().GetField("comparison", flags).GetValue(box);
+var comparisonRoot = (UnityEngine.UIElements.Foldout)comparison.GetType().GetProperty("Element", flags).GetValue(comparison, null);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var body = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var nativeViewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var state = new UnityEngine.UIElements.VisualElement { name = "layout-comparison-hover-state" };
+state.style.display = UnityEngine.UIElements.DisplayStyle.None;
+state.userData = new object[] {
+    access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null),
+    boxRoot.value, comparisonRoot.value, body.scrollOffset,
+    access.GetType().GetProperty("IsPreviewEnabled", flags).GetValue(access, null), element,
+    tabs.GetType().GetProperty("DiagnosticsVisible", flags).GetValue(tabs, null)
+};
+window.rootVisualElement.Add(state);
+nativeViewport.GetType().GetMethod("SetPreviewMode", flags).Invoke(nativeViewport, new object[] { false });
+tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+boxRoot.value = true;
+comparisonRoot.value = true;
+session.GetType().GetMethod("Refresh", flags).Invoke(session, null);
+return "实际对照表已展开；等布局后运行 HoverChecks";

@@ -1,0 +1,130 @@
+namespace UIBuilderUssNavigator
+{
+    public static class UxmlSyntaxHighlighterTestHarness
+    {
+        static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            PreservesLiteralTextAndEntities();
+            HighlightsTokenKinds();
+            KeepsMultilineState();
+            UsesThemePalettes();
+            ResetsStatePerCall();
+            return "PASS " + assertions + " assertions";
+        }
+
+        static void PreservesLiteralTextAndEntities()
+        {
+            string[] source =
+            {
+                "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\">",
+                "  <ui:Label text=\"<color=red>&amp; &#10; </noparse> and </NoParse>\" />",
+                "  文本 &lt;color=blue&gt;A&amp;B&lt;/color&gt;",
+                "",
+                "</ui:UXML>"
+            };
+            string[] output = UxmlSyntaxHighlighter.HighlightLines(source, true);
+            Equal(source.Length, output.Length, "line count");
+            for (int index = 0; index < source.Length; index++)
+                Equal(source[index], Decode(output[index]), "literal line " + index);
+        }
+
+        static void HighlightsTokenKinds()
+        {
+            string[] output = UxmlSyntaxHighlighter.HighlightLines(new[]
+            {
+                "<?xml version=\"1.0\"?>",
+                "<ui:Button name=\"start-button\" class=\"primary wide\">开始</ui:Button>",
+                "<!-- note: <ui:Label text=\"fake\" /> -->"
+            }, true);
+            Contains(output[0], "<color=#4EC9B0>", "tag name");
+            Contains(output[0], "<color=#9CDCFE>", "attribute name");
+            Contains(output[0], "<color=#CE9178>", "attribute value");
+            Contains(output[0], "<color=#808080>", "punctuation");
+            Contains(output[1], "<color=#D4D4D4><noparse>开始</noparse></color>", "text node");
+            Contains(output[2], "<color=#6A9955>", "comment");
+        }
+
+        static void KeepsMultilineState()
+        {
+            string[] source =
+            {
+                "<!-- open <ui:Label",
+                "text=\"not an attribute\"> -->",
+                "<ui:Label text=\"first line",
+                "second &quot; line\" name=\"title\" />"
+            };
+            string[] output = UxmlSyntaxHighlighter.HighlightLines(source, true);
+            Contains(output[1], "<color=#6A9955>", "continued comment");
+            True(!output[1].Contains("<color=#9CDCFE>"), "comment content not attribute");
+            Contains(output[3], "<color=#CE9178>", "continued attribute string");
+            Contains(output[3], "<color=#9CDCFE><noparse>name</noparse></color>", "attribute after continued string");
+            for (int index = 0; index < source.Length; index++)
+                Equal(source[index], Decode(output[index]), "multiline " + index);
+        }
+
+        static void UsesThemePalettes()
+        {
+            string line = "<ui:Label name=\"title\">文本</ui:Label><!-- c -->";
+            string dark = UxmlSyntaxHighlighter.HighlightLines(new[] { line }, true)[0];
+            string light = UxmlSyntaxHighlighter.HighlightLines(new[] { line }, false)[0];
+            True(dark != light, "theme output differs");
+            Contains(light, "<color=#267F99>", "light tag");
+            Contains(light, "<color=#0451A5>", "light attribute");
+            Contains(light, "<color=#A31515>", "light value");
+            Contains(light, "<color=#008000>", "light comment");
+            Contains(light, "<color=#333333>", "light text");
+            Equal(line, Decode(dark), "dark decode");
+            Equal(line, Decode(light), "light decode");
+        }
+
+        static void ResetsStatePerCall()
+        {
+            UxmlSyntaxHighlighter.HighlightLines(new[] { "<!-- open" }, true);
+            string fresh = UxmlSyntaxHighlighter.HighlightLines(new[] { "<ui:Label />" }, true)[0];
+            Contains(fresh, "<color=#4EC9B0>", "state reset tag");
+            True(!fresh.Contains("<color=#6A9955>"), "state reset comment");
+
+            UxmlSyntaxHighlighter.HighlightLines(new[] { "<ui:Label text=\"open" }, true);
+            fresh = UxmlSyntaxHighlighter.HighlightLines(new[] { "<ui:Button />" }, true)[0];
+            Contains(fresh, "<color=#4EC9B0>", "state reset string");
+            True(!fresh.Contains("<color=#CE9178><noparse><ui:Button"), "fresh tag not string");
+        }
+
+        // 只解释高亮器生成的外层标签；noparse 内与其同名的 UXML 源码必须按普通字符返回。
+        static string Decode(string rich)
+        {
+            var plain = new System.Text.StringBuilder();
+            bool noParse = false;
+            int colorDepth = 0;
+            int index = 0;
+            while (index < rich.Length)
+            {
+                if (!noParse && StartsWith(rich, index, "<noparse>")) { noParse = true; index += 9; continue; }
+                if (noParse && StartsWith(rich, index, "</noparse>")) { noParse = false; index += 10; continue; }
+                if (!noParse && StartsWith(rich, index, "</color>")) { colorDepth--; index += 8; continue; }
+                if (!noParse && StartsWith(rich, index, "<color=#"))
+                {
+                    int close = rich.IndexOf('>', index);
+                    if (close < 0) throw new System.Exception("Malformed color tag");
+                    colorDepth++;
+                    index = close + 1;
+                    continue;
+                }
+                plain.Append(rich[index++]);
+            }
+            True(!noParse, "balanced noparse");
+            True(colorDepth == 0, "balanced color");
+            return plain.ToString();
+        }
+
+        static bool StartsWith(string text, int index, string value) =>
+            index + value.Length <= text.Length && string.CompareOrdinal(text, index, value, 0, value.Length) == 0;
+
+        static void Contains(string actual, string expected, string name) { True(actual.Contains(expected), name); }
+        static void Equal<T>(T expected, T actual, string name) { True(System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual), name + " expected=" + expected + " actual=" + actual); }
+        static void True(bool condition, string name) { assertions++; if (!condition) throw new System.Exception("FAIL " + name); }
+    }
+}

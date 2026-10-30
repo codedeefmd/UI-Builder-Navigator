@@ -1,0 +1,135 @@
+namespace UIBuilderUssNavigator
+{
+    public static class UssSyntaxHighlighterTestHarness
+    {
+        static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            PreservesLiteralText();
+            HighlightsTokenKinds();
+            KeepsMultilineState();
+            KeepsEscapedStringContents();
+            UsesThemePalettes();
+            ResetsStatePerCall();
+            return "PASS " + assertions + " assertions";
+        }
+
+        static void PreservesLiteralText()
+        {
+            string[] source =
+            {
+                ".a > Button:hover, #id {",
+                "    content: \"<color=red>& literal </noparse> and </NoParse>\";",
+                "    background-image: resource(\"a{b};c.png\"); /* } : fake */",
+                "}"
+            };
+            string[] output = UssSyntaxHighlighter.HighlightLines(source, true);
+            Equal(source.Length, output.Length, "line count");
+            for (int index = 0; index < source.Length; index++)
+                Equal(source[index], Decode(output[index]), "literal line " + index);
+        }
+
+        static void HighlightsTokenKinds()
+        {
+            string[] output = UssSyntaxHighlighter.HighlightLines(new[]
+            {
+                "@import url(\"theme.uss\");",
+                ".card:hover > Button, #main {",
+                "  border-radius: 12.5px; color: #A0b1C2; background: rgb(10, 20, 30);",
+                "  visibility: hidden; content: \"hello\"; /* note */",
+                "}"
+            }, true);
+            Contains(output[0], "<color=#C586C0>", "at-rule keyword");
+            Contains(output[0], "<color=#DCDCAA>", "at-rule function");
+            Contains(output[1], "<color=#4EC9B0>", "selector");
+            Contains(output[2], "<color=#9CDCFE>", "property");
+            Contains(output[2], "<color=#B5CEA8>", "number and hex");
+            Contains(output[2], "<color=#DCDCAA>", "function");
+            Contains(output[3], "<color=#C586C0>", "value keyword");
+            Contains(output[3], "<color=#CE9178>", "string");
+            Contains(output[3], "<color=#6A9955>", "comment");
+            Contains(output[1], "<color=#D4D4D4>", "punctuation");
+        }
+
+        static void KeepsMultilineState()
+        {
+            string[] source = { ".a {", "/* comment {", "fake: 9px; */ width: 2px;", "content: \"open", "still string\";", "}" };
+            string[] output = UssSyntaxHighlighter.HighlightLines(source, true);
+            Contains(output[2], "<color=#6A9955>", "continued comment");
+            Contains(output[2], "<color=#9CDCFE>", "property after comment");
+            Contains(output[4], "<color=#CE9178>", "continued string");
+            for (int index = 0; index < source.Length; index++) Equal(source[index], Decode(output[index]), "multiline " + index);
+        }
+
+        static void KeepsEscapedStringContents()
+        {
+            string source = "content: \"escaped \\\" quote; /* not comment */ { }\";";
+            string output = UssSyntaxHighlighter.HighlightLines(new[] { ".a { " + source + " }" }, true)[0];
+            Equal(".a { " + source + " }", Decode(output), "escaped string decode");
+            Contains(output, "<color=#CE9178>", "escaped string color");
+            True(!output.Contains("<color=#6A9955>"), "comment marker inside string");
+
+            string[] continued = { ".a {", "content: \"line escape \\", "\"still string\";", "}" };
+            string[] highlighted = UssSyntaxHighlighter.HighlightLines(continued, true);
+            Contains(highlighted[2], "<color=#CE9178><noparse>\"still string\"</noparse></color>", "escaped multiline continuation");
+            for (int index = 0; index < continued.Length; index++)
+                Equal(continued[index], Decode(highlighted[index]), "escaped multiline " + index);
+        }
+
+        static void UsesThemePalettes()
+        {
+            string line = ".a { width: 10px; color: red; /* c */ }";
+            string dark = UssSyntaxHighlighter.HighlightLines(new[] { line }, true)[0];
+            string light = UssSyntaxHighlighter.HighlightLines(new[] { line }, false)[0];
+            True(dark != light, "theme output differs");
+            Contains(light, "<color=#0451A5>", "light property");
+            Contains(light, "<color=#008000>", "light comment");
+            Equal(line, Decode(dark), "dark decode");
+            Equal(line, Decode(light), "light decode");
+        }
+
+        static void ResetsStatePerCall()
+        {
+            UssSyntaxHighlighter.HighlightLines(new[] { "/* open" }, true);
+            string fresh = UssSyntaxHighlighter.HighlightLines(new[] { ".fresh {" }, true)[0];
+            Contains(fresh, "<color=#4EC9B0>", "state reset selector");
+            True(!fresh.Contains("<color=#6A9955>"), "state reset comment");
+        }
+
+        // 解码器只解释高亮器在 noparse 外生成的标签；源码中的同名文本位于 noparse 内，必须作为普通字符保留。
+        static string Decode(string rich)
+        {
+            var plain = new System.Text.StringBuilder();
+            bool noParse = false;
+            int colorDepth = 0;
+            int index = 0;
+            while (index < rich.Length)
+            {
+                if (!noParse && StartsWith(rich, index, "<noparse>")) { noParse = true; index += 9; continue; }
+                if (noParse && StartsWith(rich, index, "</noparse>")) { noParse = false; index += 10; continue; }
+                if (!noParse && StartsWith(rich, index, "</color>")) { colorDepth--; index += 8; continue; }
+                if (!noParse && StartsWith(rich, index, "<color=#"))
+                {
+                    int close = rich.IndexOf('>', index);
+                    if (close < 0) throw new System.Exception("Malformed color tag");
+                    colorDepth++;
+                    index = close + 1;
+                    continue;
+                }
+                plain.Append(rich[index++]);
+            }
+            True(!noParse, "balanced noparse");
+            True(colorDepth == 0, "balanced color");
+            return plain.ToString();
+        }
+
+        static bool StartsWith(string text, int index, string value) =>
+            index + value.Length <= text.Length && string.CompareOrdinal(text, index, value, 0, value.Length) == 0;
+
+        static void Contains(string actual, string expected, string name) { True(actual.Contains(expected), name); }
+        static void Equal<T>(T expected, T actual, string name) { True(System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual), name + " expected=" + expected + " actual=" + actual); }
+        static void True(bool condition, string name) { assertions++; if (!condition) throw new System.Exception("FAIL " + name); }
+    }
+}

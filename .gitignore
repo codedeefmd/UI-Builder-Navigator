@@ -1,0 +1,30 @@
+# Unity-generated directories
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/Builds/
+/MemoryCaptures/
+/Recordings/
+/.omx/
+
+# IDE-generated files
+/.vs/
+/.vscode/
+/.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+
+# Local operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local crash and diagnostic output
+sysinfo.txt
+*.stackdump

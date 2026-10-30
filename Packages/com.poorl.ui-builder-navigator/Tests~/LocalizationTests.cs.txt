@@ -1,0 +1,72 @@
+namespace UnityEngine
+{
+    public enum SystemLanguage { ChineseSimplified, English }
+    public static class Application { public static SystemLanguage systemLanguage = SystemLanguage.ChineseSimplified; }
+}
+
+namespace UnityEditor
+{
+    public static class EditorPrefs
+    {
+        static readonly System.Collections.Generic.Dictionary<string, string> values =
+            new System.Collections.Generic.Dictionary<string, string>();
+        public static string GetString(string key, string fallback) => values.TryGetValue(key, out string value) ? value : fallback;
+        public static void SetString(string key, string value) => values[key] = value;
+    }
+}
+
+namespace UIBuilderUssNavigator
+{
+    public static class LocalizationTestHarness
+    {
+        static int assertions;
+        static void Check(bool condition, string message)
+        {
+            assertions++;
+            if (!condition) throw new System.Exception(message);
+        }
+
+        public static string Run()
+        {
+            Check(L10n.Language == "zh", "Default language must follow the Chinese system language");
+            Check(L10n.Revision == 0, "Initial revision must be zero");
+            Check(L10n.Tr("属性", "Properties") == "属性", "Chinese label");
+            Check(L10n.Format("覆盖声明（{0}）", "Overridden ({0})", 3) == "覆盖声明（3）", "Chinese count");
+            int notifications = 0;
+            System.Action changed = () => notifications++;
+            L10n.Changed += changed;
+            var culture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                L10n.SetLanguage("zh");
+                Check(L10n.Revision == 0 && notifications == 0, "Same language must not notify or change revision");
+                L10n.SetLanguage("en");
+                Check(L10n.Language == "en", "English selection");
+                Check(L10n.Revision == 1 && notifications == 1, "English selection must notify once");
+                Check(UnityEditor.EditorPrefs.GetString("UIBuilderUssNavigator.Language", "") == "en", "English preference persistence");
+                Check(L10n.Tr("诊断", "Diagnostics") == "Diagnostics", "English label");
+                Check(L10n.Format("覆盖声明（{0}）", "Overridden ({0})", 3) == "Overridden (3)", "English count");
+                Check(L10n.Format("规则：{0}", "Rule: {0}", ".card:hover") == "Rule: .card:hover", "Selector identity");
+                Check(L10n.Format("元素：{0}", "Element: {0}", "<Button name=\"中文\">") == "Element: <Button name=\"中文\">", "User identifiers must not be translated");
+                System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("fr-FR");
+                Check(L10n.Format("值：{0}", "Value: {0}", 1.5) == "Value: 1.5", "Formatting must remain culture-independent");
+                bool rejected = false;
+                try { L10n.SetLanguage("de"); } catch (System.ArgumentException) { rejected = true; }
+                Check(rejected && L10n.Language == "en" && L10n.Revision == 1 && notifications == 1,
+                    "Unsupported languages must be rejected without state mutation");
+                L10n.SetLanguage("en");
+                Check(notifications == 1, "Selecting English twice must not notify twice");
+                L10n.SetLanguage("zh");
+                Check(L10n.Tr("属性", "Properties") == "属性" && L10n.Revision == 2, "Chinese round trip");
+                Check(UnityEditor.EditorPrefs.GetString("UIBuilderUssNavigator.Language", "") == "zh", "Chinese preference persistence");
+                Check(notifications == 2, "Exactly one notification per actual change");
+                return "PASS " + assertions + " assertions";
+            }
+            finally
+            {
+                L10n.Changed -= changed;
+                System.Threading.Thread.CurrentThread.CurrentCulture = culture;
+            }
+        }
+    }
+}

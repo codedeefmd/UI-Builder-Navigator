@@ -1,0 +1,31 @@
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var box = session.GetType().GetField("boxModel", flags).GetValue(session);
+var overlay = box.GetType().GetField("overlay", flags).GetValue(box);
+var state = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "layout-comparison-zoom-state");
+var saved = (object[])state.userData;
+var element = (UnityEngine.UIElements.VisualElement)saved[4];
+var nativeViewport = window.GetType().GetProperty("viewport", flags).GetValue(window, null);
+var zoom = nativeViewport.GetType().GetProperty("zoomScale", flags);
+var offset = nativeViewport.GetType().GetProperty("contentOffset", flags);
+try
+{
+    overlay.GetType().GetMethod("ShowLayout", flags).Invoke(overlay, new object[] { element });
+    var point = overlay.GetType().GetMethod("LayoutPoint", flags);
+    float edge = Vector2.Distance((Vector2)point.Invoke(overlay, new object[] { element, Vector2.zero }),
+        (Vector2)point.Invoke(overlay, new object[] { element, new Vector2(element.layout.width, 0f) }));
+    if (Mathf.Abs(edge / (float)saved[2] - 1.25f) > 0.01f) throw new Exception("画布缩放未正确应用到高亮轮廓");
+    if (!Mathf.Approximately(element.layout.width, (float)saved[3])) throw new Exception("画布缩放污染了布局单位尺寸");
+    return "PASS 实际画布缩放后轮廓同比变化，布局单位尺寸保持，视口随后恢复";
+}
+finally
+{
+    zoom.SetValue(nativeViewport, saved[0], null);
+    offset.SetValue(nativeViewport, saved[1], null);
+    overlay.GetType().GetMethod("Hide", flags, null, Type.EmptyTypes, null).Invoke(overlay, null);
+    state.RemoveFromHierarchy();
+}

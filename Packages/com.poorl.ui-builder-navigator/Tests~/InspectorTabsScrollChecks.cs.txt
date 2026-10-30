@@ -1,0 +1,53 @@
+// 同一文件调用三次，中间让 Unity 完成隐藏/显示的实际布局。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var show = tabs.GetType().GetMethod("ShowDiagnostics", flags);
+var scroll = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var native = (UnityEngine.UIElements.VisualElement)tabs.GetType().GetField("nativePage", flags).GetValue(tabs);
+var nativeScroll = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ScrollView>(native, "inspector-scroll-view");
+var marker = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "inspector-tabs-scroll-state");
+var saved = (object[])marker.userData;
+bool complete = false;
+try
+{
+    if ((int)saved[3] == 0)
+    {
+        if (scroll.contentContainer.layout.height <= scroll.contentViewport.layout.height + 100f)
+            throw new Exception("诊断页内容不足以验证实际滚动，请先选中页面元素");
+        scroll.scrollOffset = new Vector2(0f, 100f);
+        saved[4] = scroll.scrollOffset.y;
+        show.Invoke(tabs, new object[] { false });
+        saved[3] = 1;
+        return "已滚动并切到属性页；等待隐藏布局后再次运行 ScrollChecks";
+    }
+    if ((int)saved[3] == 1)
+    {
+        if (Mathf.Abs(scroll.scrollOffset.y - (float)saved[4]) > 0.1f)
+            throw new Exception("隐藏诊断页后滚动位置被清零");
+        if (native.layout.height < 500f) throw new Exception("属性页未取回 Inspector 高度");
+        show.Invoke(tabs, new object[] { true });
+        saved[3] = 2;
+        return "PASS 隐藏页保留滚动、属性页取回高度；等待显示布局后最后运行 ScrollChecks";
+    }
+    if (Mathf.Abs(scroll.scrollOffset.y - (float)saved[4]) > 0.1f)
+        throw new Exception("重显诊断页后滚动位置未保留");
+    if (nativeScroll.scrollOffset != (Vector2)saved[2]) throw new Exception("往返切页改变原生属性滚动");
+    if (scroll.contentViewport.layout.height < 500f) throw new Exception("诊断滚动区没有填满 Inspector");
+    complete = true;
+    return "PASS 跨布局帧往返保留两页滚动位置，诊断滚动区填满 Inspector";
+}
+catch { complete = true; throw; }
+finally
+{
+    if (complete)
+    {
+        show.Invoke(tabs, new object[] { saved[0] });
+        scroll.scrollOffset = (Vector2)saved[1];
+        marker.RemoveFromHierarchy();
+    }
+}

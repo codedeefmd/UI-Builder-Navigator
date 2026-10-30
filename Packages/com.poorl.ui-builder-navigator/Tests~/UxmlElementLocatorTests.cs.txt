@@ -1,0 +1,128 @@
+namespace UIBuilderUssNavigator
+{
+    public static class UxmlElementLocatorTestHarness
+    {
+        static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            FindsRootAndNestedDuplicateElements();
+            ExcludesOnlyUnityMetadata();
+            FindsMultilineStartTag();
+            HandlesCommentsEntitiesAndLineEndings();
+            RejectsUnmatchedPaths();
+            return "PASS " + assertions + " assertions";
+        }
+
+        static void FindsRootAndNestedDuplicateElements()
+        {
+            string text =
+                "<?xml version=\"1.0\"?>\n" +
+                "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\">\n" +
+                "  <ui:VisualElement>\n" +
+                "    <ui:Label />\n" +
+                "    <ui:Label />\n" +
+                "  </ui:VisualElement>\n" +
+                "  <ui:VisualElement>\n" +
+                "    <ui:Label />\n" +
+                "  </ui:VisualElement>\n" +
+                "</ui:UXML>";
+
+            Finds(text, new int[0], 1, 1, "root");
+            Finds(text, new[] { 0 }, 2, 2, "first anonymous sibling");
+            Finds(text, new[] { 0, 0 }, 3, 3, "first duplicate label");
+            Finds(text, new[] { 0, 1 }, 4, 4, "second duplicate label");
+            Finds(text, new[] { 1 }, 6, 6, "second anonymous sibling");
+            Finds(text, new[] { 1, 0 }, 7, 7, "nested child");
+        }
+
+        static void ExcludesOnlyUnityMetadata()
+        {
+            string text =
+                "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\" xmlns:custom=\"Example.Controls\">\n" +
+                "  <ui:Style src=\"theme.uss\" />\n" +
+                "  <ui:Template name=\"Card\" src=\"Card.uxml\" />\n" +
+                "  <ui:AttributeOverrides element-name=\"title\" text=\"A\" />\n" +
+                "  <Style />\n" +
+                "  <custom:Style />\n" +
+                "  <custom:Template />\n" +
+                "  <ui:Button />\n" +
+                "</ui:UXML>";
+
+            Finds(text, new[] { 0 }, 5, 5, "custom Style remains visible");
+            Finds(text, new[] { 1 }, 6, 6, "custom Template remains visible");
+            Finds(text, new[] { 2 }, 7, 7, "metadata does not consume indices");
+            Missing(text, new[] { 3 }, "only three visible children");
+        }
+
+        static void FindsMultilineStartTag()
+        {
+            string text =
+                "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\">\n" +
+                "  <ui:Label\n" +
+                "      text=\"A > B &amp; C\"\n" +
+                "      name=\"caption\">\n" +
+                "    body\n" +
+                "  </ui:Label>\n" +
+                "  <ui:Button\n" +
+                "      text=\"Self closing > button\" />\n" +
+                "</ui:UXML>";
+
+            Finds(text, new[] { 0 }, 1, 3, "multiline nonempty tag");
+            Finds(text, new[] { 1 }, 6, 7, "multiline self-closing tag");
+        }
+
+        static void HandlesCommentsEntitiesAndLineEndings()
+        {
+            string lf =
+                "<!-- <ui:Button><ui:Label /></ui:Button> -->\n" +
+                "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\">\n" +
+                "  <!-- <ui:Label text=\"fake > value\" /> -->\n" +
+                "  <ui:Label text=\"A &lt; B &amp;&amp; C > D\" />\n" +
+                "</ui:UXML>";
+            Finds(lf, new[] { 0 }, 3, 3, "comment fake tag and entities");
+
+            string crlf = lf.Replace("\n", "\r\n");
+            Finds(crlf, new int[0], 1, 1, "CRLF root line");
+            Finds(crlf, new[] { 0 }, 3, 3, "CRLF child line");
+        }
+
+        static void RejectsUnmatchedPaths()
+        {
+            string text = "<ui:UXML xmlns:ui=\"UnityEngine.UIElements\"><ui:Button /></ui:UXML>";
+            Missing(text, new[] { 1 }, "missing sibling");
+            Missing(text, new[] { 0, 0 }, "missing descendant of self-closing element");
+            Missing(text, new[] { -1 }, "negative index");
+            Missing(text, null, "null path");
+            Missing(string.Empty, new int[0], "empty document");
+        }
+
+        static void Finds(string text, System.Collections.Generic.IReadOnlyList<int> path,
+            int expectedStart, int expectedEnd, string name)
+        {
+            RuleRange range;
+            True(UxmlElementLocator.TryFind(text, path, out range), name + " found");
+            Equal(expectedStart, range.StartLine, name + " start");
+            Equal(expectedEnd, range.EndLine, name + " end");
+        }
+
+        static void Missing(string text, System.Collections.Generic.IReadOnlyList<int> path, string name)
+        {
+            RuleRange range;
+            True(!UxmlElementLocator.TryFind(text, path, out range), name);
+        }
+
+        static void Equal<T>(T expected, T actual, string name)
+        {
+            True(System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual),
+                name + " expected=" + expected + " actual=" + actual);
+        }
+
+        static void True(bool condition, string name)
+        {
+            assertions++;
+            if (!condition) throw new System.Exception("FAIL " + name);
+        }
+    }
+}

@@ -1,0 +1,137 @@
+namespace UIBuilderUssNavigator
+{
+    public static class DiagnosticTextTestHarness
+    {
+        static int assertions;
+
+        public static string Run()
+        {
+            assertions = 0;
+            VerifiesColorRoles();
+            PreservesLiteralText();
+            RejectsRichTextInjection();
+            HighlightsValueParts();
+            HighlightsIdentity();
+            HighlightsDeclaration();
+            return "PASS " + assertions + " assertions";
+        }
+
+        static void VerifiesColorRoles()
+        {
+            string[] dark = { "C1CAD6", "93C6DE", "BFD6AF", "8CABB6", "CAA5D7", "D6C695", "DCB696", "8FCBB9", "9BACC0", "9AA6B4", "D6C695" };
+            string[] light = { "394757", "005A7A", "3F641C", "486874", "704580", "6B5700", "7A4A28", "006B58", "4D5D70", "5E6B79", "6B5700" };
+            for (int index = 0; index < dark.Length; index++)
+            {
+                DiagnosticTone tone = (DiagnosticTone)index;
+                Equal(dark[index], DiagnosticText.ColorCode(tone, true), "dark role " + tone);
+                Equal(light[index], DiagnosticText.ColorCode(tone, false), "light role " + tone);
+                Equal(6, DiagnosticText.ColorCode(tone, true).Length, "six digit role " + tone);
+            }
+        }
+
+        static void PreservesLiteralText()
+        {
+            string source = "前缀 <color=red>红</color> </noparse> 中间 </NoParse> 后缀";
+            Equal(source, Decode(DiagnosticText.Colorize(source, DiagnosticTone.Comment, true)), "colorize round trip");
+            Equal(source, Decode(DiagnosticText.Value(source, true)), "value round trip");
+            Contains(DiagnosticText.Colorize(source, DiagnosticTone.Comment, true), "<color=#9AA6B4>", "comment role");
+        }
+
+        static void RejectsRichTextInjection()
+        {
+            string source = "<color=#FF0000>attack</color><b>bold</b></noparse>";
+            string output = DiagnosticText.Colorize(source, DiagnosticTone.Text, true);
+            Equal(source, Decode(output), "injection round trip");
+            Contains(output, "<noparse><color=#FF0000>attack</color><b>bold</b>", "injection remains noparse");
+            True(!output.StartsWith("<color=#FF0000>"), "source color is not active wrapper");
+        }
+
+        static void HighlightsValueParts()
+        {
+            string source = "-1.25e-3px +.5rem 50% 90deg 120ms auto none column nowrap stretch flex-start Bold BoldAndItalic UpperLeft --accent-color rgb(1, 2, 3) \"x\" #A0b1C2";
+            string output = DiagnosticText.Value(source, true);
+            Equal(source, Decode(output), "value decode");
+            Contains(output, Wrap("-1.25e-3", "BFD6AF"), "negative exponent");
+            Contains(output, Wrap("px", "8CABB6"), "px unit");
+            Contains(output, Wrap("+.5", "BFD6AF"), "signed decimal");
+            Contains(output, Wrap("rem", "8CABB6"), "rem unit");
+            Contains(output, Wrap("%", "8CABB6"), "percent unit");
+            Contains(output, Wrap("deg", "8CABB6"), "degree unit");
+            Contains(output, Wrap("ms", "8CABB6"), "time unit");
+            foreach (string keyword in new[] { "auto", "none", "column", "nowrap", "stretch", "flex-start" })
+                Contains(output, Wrap(keyword, "CAA5D7"), "keyword " + keyword);
+            foreach (string enumValue in new[] { "Bold", "BoldAndItalic", "UpperLeft" })
+                Contains(output, Wrap(enumValue, "CAA5D7"), "unknown Unity enum " + enumValue);
+            Contains(output, Wrap("--accent-color", "DCB696"), "USS variable name");
+            Contains(output, Wrap("rgb", "D6C695"), "function name");
+            Contains(output, Wrap("\"x\"", "DCB696"), "quoted string");
+            Contains(output, Wrap("#A0b1C2", "BFD6AF"), "hex value");
+
+            string layoutSize = "1920 × 579 px";
+            string layoutOutput = DiagnosticText.Value(layoutSize, true);
+            Equal(layoutSize, Decode(layoutOutput), "layout size decode");
+            Contains(layoutOutput, Wrap("1920", "BFD6AF"), "layout width number");
+            Contains(layoutOutput, Wrap("579", "BFD6AF"), "layout height number");
+            Contains(layoutOutput, Wrap("px", "8CABB6"), "spaced layout unit");
+        }
+
+        static void HighlightsIdentity()
+        {
+            string source = "Button #enter-experiment";
+            string output = DiagnosticText.Identity(source, true);
+            Equal(source, Decode(output), "identity decode");
+            Contains(output, Wrap("Button", "D6C695"), "identity type");
+            Contains(output, Wrap("#enter-experiment", "DCB696"), "identity name");
+        }
+
+        static void HighlightsDeclaration()
+        {
+            string source = "  font-size : -15.5px;";
+            string output = DiagnosticText.Declaration(source, true);
+            Equal(source, Decode(output), "declaration decode");
+            Contains(output, Wrap("font-size", "93C6DE"), "declaration property");
+            Contains(output, Wrap("-15.5", "BFD6AF"), "declaration number");
+            Contains(output, Wrap("px", "8CABB6"), "declaration unit");
+
+            string withoutColon = "auto";
+            Equal(withoutColon, Decode(DiagnosticText.Declaration(withoutColon, false)), "declaration without colon");
+            Contains(DiagnosticText.Declaration(withoutColon, false), "<color=#704580>", "light declaration keyword");
+        }
+
+        static string Wrap(string text, string color) => "<color=#" + color + "><noparse>" + text + "</noparse></color>";
+
+        // 只解释格式化器在 noparse 外生成的标签；原文中的同名标签始终作为普通字符复制。
+        static string Decode(string rich)
+        {
+            var plain = new System.Text.StringBuilder();
+            bool noParse = false;
+            int colorDepth = 0;
+            int index = 0;
+            while (index < rich.Length)
+            {
+                if (!noParse && StartsWith(rich, index, "<noparse>")) { noParse = true; index += 9; continue; }
+                if (noParse && StartsWith(rich, index, "</noparse>")) { noParse = false; index += 10; continue; }
+                if (!noParse && StartsWith(rich, index, "</color>")) { colorDepth--; index += 8; continue; }
+                if (!noParse && StartsWith(rich, index, "<color=#"))
+                {
+                    int close = rich.IndexOf('>', index);
+                    if (close < 0) throw new System.Exception("Malformed color tag");
+                    colorDepth++;
+                    index = close + 1;
+                    continue;
+                }
+                plain.Append(rich[index++]);
+            }
+            True(!noParse, "balanced noparse");
+            True(colorDepth == 0, "balanced color");
+            return plain.ToString();
+        }
+
+        static bool StartsWith(string text, int index, string value) =>
+            index + value.Length <= text.Length && string.CompareOrdinal(text, index, value, 0, value.Length) == 0;
+
+        static void Contains(string actual, string expected, string name) { True(actual.Contains(expected), name); }
+        static void Equal<T>(T expected, T actual, string name) { True(System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual), name + " expected=" + expected + " actual=" + actual); }
+        static void True(bool condition, string name) { assertions++; if (!condition) throw new System.Exception("FAIL " + name); }
+    }
+}

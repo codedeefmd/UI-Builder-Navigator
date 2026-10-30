@@ -1,0 +1,78 @@
+// 第一步：通过 execute_code 运行；临时树挂在 Builder 自身根节点，位于画布之外。
+// 等一个 Editor 布局周期后运行 StyleSourcesChecks.cs.txt；后者 finally 会移除树和销毁临时 USS。
+// 不创建项目资源、不保存文档，也不改变原生选择。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+if (UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "style-sources-test-host") != null)
+    throw new Exception("上次测试树尚未清理");
+var importerType = AppDomain.CurrentDomain.GetAssemblies().Select(candidate =>
+    candidate.GetType("UnityEditor.UIElements.StyleSheets.StyleSheetImporterImpl")).First(candidate => candidate != null);
+var importer = Activator.CreateInstance(importerType, true);
+var sheet = ScriptableObject.CreateInstance<UnityEngine.UIElements.StyleSheet>();
+sheet.name = "StyleSourcesFixture";
+importerType.GetMethod("Import", flags).Invoke(importer, new object[] { sheet, @"
+.source-host { width: 400px; height: 300px; color: #2468ac; font-size: 19px; }
+.source-probe { width: 50%; height: 41px; height: 60px; font-size: 18px;
+    margin: 1px 2px 3px 4px; margin-left: 9px; }
+.source-probe.strong { font-size: 23px; }
+#style-sources-probe { font-size: 25px; }
+.source-probe { font-size: 20px; margin: 5px 6px 7px 8px; }
+.source-probe, #style-sources-probe { padding-left: 7px; }
+.source-probe.strong { padding-left: 9px; }
+.source-probe:hover { background-color: #aabbcc; }
+.source-inherited { width: 20px; height: 20px; }
+.source-reset { color: #ff0000; color: unset; background-color: #ff0000; background-color: initial; }
+.source-variable { --probe-color: #99aa33; color: var(--probe-color); }
+.source-invalid-variable { color: #ff0000; color: var(--missing-probe-color); }
+.source-cache-match { background-color: #445566; }
+.source-named { color: white; background-color: transparent; }
+.source-inline-rule { width: 75%; font-size: 29px; }
+" });
+var host = new UnityEngine.UIElements.VisualElement { name = "style-sources-test-host", pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+host.AddToClassList("source-host");
+host.style.position = UnityEngine.UIElements.Position.Absolute;
+host.style.left = -20000f;
+host.style.top = -20000f;
+host.styleSheets.Add(sheet);
+host.userData = new object[] {
+    access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null),
+    access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null),
+    access.GetType().GetProperty("SelectedElement", flags).GetValue(access, null), sheet
+};
+foreach (string role in new[] { "probe", "inherited", "reset", "variable", "invalid-variable", "inline", "runtime-inline", "hover", "cache-probe", "cache-hover", "named" })
+{
+    var element = new UnityEngine.UIElements.VisualElement { name = "style-sources-" + role,
+        pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+    element.AddToClassList(role == "probe" || role == "inline" || role == "runtime-inline" || role == "hover" || role.StartsWith("cache-") ? "source-probe" : "source-" + role);
+    if (role == "probe") element.AddToClassList("strong");
+    if (role == "runtime-inline") element.style.fontSize = 31f;
+    if (role == "hover")
+    {
+        var pseudo = typeof(UnityEngine.UIElements.VisualElement).GetProperty("pseudoStates", flags);
+        pseudo.SetValue(element, Enum.Parse(pseudo.PropertyType, "Hover"), null);
+    }
+    if (role == "inline")
+    {
+        var rules = (Array)typeof(UnityEngine.UIElements.StyleSheet).GetProperty("rules", flags).GetValue(sheet, null);
+        var rule = rules.GetValue(rules.Length - 1);
+        // 模拟 UXML 内联规则的真实存放位置，与 IStyle 运行时写入分开验证。
+        var inline = typeof(UnityEngine.UIElements.VisualElement).GetField("inlineStyleAccess", flags);
+        var forceAccess = element.style;
+        object instance = inline.GetValue(element);
+        instance.GetType().GetMethod("SetInlineRule", flags).Invoke(instance, new object[] { sheet, rule });
+    }
+    host.Add(element);
+}
+window.rootVisualElement.Add(host);
+// AttachToPanel 会刷新 hover 状态；在挂入真实面板后设置测试伪状态。
+var hovered = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-hover");
+var pseudoState = typeof(UnityEngine.UIElements.VisualElement).GetProperty("pseudoStates", flags);
+pseudoState.SetValue(hovered, Enum.Parse(pseudoState.PropertyType, "Hover"), null);
+var cacheHovered = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-cache-hover");
+pseudoState.SetValue(cacheHovered, Enum.Parse(pseudoState.PropertyType, "Hover"), null);
+return "临时匹配与布局样例已建立；下次调用执行 StyleSourcesChecks.cs.txt";

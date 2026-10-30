@@ -1,0 +1,29 @@
+// 在 Setup 后等一个布局周期运行本文件，再等一个样式周期运行 Checks。
+// 单独保留 class / hover 两份缓存基线，避免用祖先改变误证明匹配 hash 会刷新。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var host = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(window.rootVisualElement, "style-sources-test-host");
+var saved = (object[])host.userData;
+var expanded = new object[6];
+Array.Copy(saved, expanded, saved.Length);
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var readerType = plugin.GetType("UIBuilderUssNavigator.StyleSourceReader");
+var needsRebuild = readerType.GetMethod("NeedsRebuild", flags);
+foreach (int index in new[] { 4, 5 })
+{
+    object reader = Activator.CreateInstance(readerType, flags, null, new object[] { window.GetType().Assembly }, null);
+    var target = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host,
+        index == 4 ? "style-sources-cache-probe" : "style-sources-cache-hover");
+    if (!(bool)needsRebuild.Invoke(reader, new object[] { target, false }) ||
+        (bool)needsRebuild.Invoke(reader, new object[] { target, false })) throw new Exception("缓存基线异常");
+    expanded[index] = reader;
+}
+host.userData = expanded;
+var probe = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-cache-probe");
+probe.AddToClassList("source-cache-match");
+var hovered = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(host, "style-sources-cache-hover");
+var pseudo = typeof(UnityEngine.UIElements.VisualElement).GetProperty("pseudoStates", flags);
+pseudo.SetValue(hovered, Enum.ToObject(pseudo.PropertyType, 0), null);
+return "class 与 hover 状态已改变；等样式计算后执行 Checks";

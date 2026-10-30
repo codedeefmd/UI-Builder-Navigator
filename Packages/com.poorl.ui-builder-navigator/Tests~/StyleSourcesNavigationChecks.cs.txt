@@ -1,0 +1,77 @@
+// 实际来源按钮、双预览、原生选择与滚动状态检查；所有原生选择/活动 USS 在 finally 恢复。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .First(candidate => candidate.GetType().FullName == "Unity.UI.Builder.Builder");
+var plugin = AppDomain.CurrentDomain.GetAssemblies().First(candidate => candidate.GetName().Name == "UIBuilderUssNavigator.Editor");
+var session = plugin.GetType("UIBuilderUssNavigator.UssPreviewNavigator").GetField("session", flags).GetValue(null);
+var access = session.GetType().GetField("access", flags).GetValue(session);
+var selection = window.GetType().GetProperty("selection", flags).GetValue(window, null);
+var select = selection.GetType().GetMethod("Select", flags);
+var selectedProperty = access.GetType().GetProperty("SelectedElement", flags);
+var sheetProperty = access.GetType().GetProperty("ActiveStyleSheet", flags);
+var original = selectedProperty.GetValue(access, null);
+var originalSheet = sheetProperty.GetValue(access, null);
+string originalUxml = (string)access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null);
+string originalUss = (string)access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null);
+var document = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var navigation = session.GetType().GetField("relatedStyles", flags).GetValue(session);
+var entries = navigation.GetType().GetMethod("GetEntries", flags);
+var element = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Label>(document, null, (string)null).ToList()
+    .First(candidate => candidate.text.Length > 0 && ((System.Collections.IEnumerable)entries.Invoke(navigation, new object[] { candidate }))
+        .Cast<object>().Any(entry => (bool)entry.GetType().GetField("CanNavigate", flags).GetValue(entry)));
+var refresh = session.GetType().GetMethod("Refresh", flags);
+var logs = new System.Collections.Generic.List<string>();
+var tabs = session.GetType().GetField("inspectorTabs", flags).GetValue(session);
+var body = (UnityEngine.UIElements.ScrollView)tabs.GetType().GetField("diagnosticPage", flags).GetValue(tabs);
+var originalTab = tabs.GetType().GetProperty("DiagnosticsVisible", flags).GetValue(tabs, null);
+try
+{
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { true });
+    select.Invoke(selection, new object[] { null, element });
+    refresh.Invoke(session, null);
+    var panel = session.GetType().GetField("styleSources", flags).GetValue(session);
+    var root = (UnityEngine.UIElements.Foldout)panel.GetType().GetField("root", flags).GetValue(panel);
+    var buttons = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Button>(root, "style-source-winner", (string)null)
+        .ToList().Where(candidate => candidate.enabledSelf).ToArray();
+    if (buttons.Length == 0) throw new Exception("真实来源面板没有可导航的按钮");
+    var clickable = buttons[0].clickable;
+    clickable.GetType().GetMethod("SimulateSingleClick", flags).Invoke(clickable, new object[] { null, 0 });
+    refresh.Invoke(session, null);
+    if (!object.ReferenceEquals(selectedProperty.GetValue(access, null), element))
+        throw new Exception("来源导航替换了原生元素选择");
+    foreach (string preview in new[] { "uxml", "uss" })
+    {
+        var view = session.GetType().GetField(preview, flags).GetValue(session);
+        if (!(bool)view.GetType().GetField("locationVisible", flags).GetValue(view))
+            throw new Exception(preview + " 预览没有保持定位");
+    }
+    logs.Add("PASS 实际来源按钮保留原生元素选择、UXML 标签与 USS 规则定位");
+    var properties = (UnityEngine.UIElements.VisualElement)panel.GetType().GetField("properties", flags).GetValue(panel);
+    var scroll = body;
+    var beforeRows = panel.GetType().GetField("rows", flags).GetValue(panel);
+    var beforeChildren = properties.childCount;
+    var beforeOffset = scroll.scrollOffset;
+    for (int repeat = 0; repeat < 5; repeat++) refresh.Invoke(session, null);
+    if (!object.ReferenceEquals(beforeRows, panel.GetType().GetField("rows", flags).GetValue(panel)))
+        throw new Exception("空闲刷新重建了来源数据");
+    if (properties.childCount != beforeChildren || scroll.scrollOffset != beforeOffset)
+        throw new Exception("空闲刷新改变了来源列表或滚动位置");
+    logs.Add("PASS 空闲轮询复用来源链并保持列表及滚动位置");
+    if (originalUxml != (string)access.GetType().GetProperty("FullUxmlText", flags).GetValue(access, null))
+        throw new Exception("来源导航修改了内存 UXML");
+    return logs;
+}
+finally
+{
+    var setSheet = window.GetType().Assembly.GetType("Unity.UI.Builder.BuilderStyleSheetsUtilities")
+        .GetMethod("SetActiveUSS", flags);
+    if (!object.ReferenceEquals(sheetProperty.GetValue(access, null), originalSheet))
+        setSheet.Invoke(null, new object[] { selection, window, originalSheet });
+    if (original == null) selection.GetType().GetMethod("ClearSelection", flags).Invoke(selection, new object[] { null, false });
+    else select.Invoke(selection, new object[] { null, original });
+    tabs.GetType().GetMethod("ShowDiagnostics", flags).Invoke(tabs, new object[] { originalTab });
+    refresh.Invoke(session, null);
+    if (originalUss != (string)access.GetType().GetProperty("FullPreviewText", flags).GetValue(access, null))
+        throw new Exception("原活动 USS 未恢复");
+}

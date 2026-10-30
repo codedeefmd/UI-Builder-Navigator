@@ -1,0 +1,33 @@
+* text=auto eol=lf
+
+*.asmdef text eol=lf
+*.asmref text eol=lf
+# Unity YAML 的空序列化字段自带尾部空格，保留引擎输出，不改写资源来满足空白检查。
+*.asset text eol=lf whitespace=-blank-at-eol
+*.cs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.meta text eol=lf whitespace=-blank-at-eol
+*.prefab text eol=lf whitespace=-blank-at-eol
+*.ps1 text eol=lf
+*.shader text eol=lf
+*.txt text eol=lf
+*.unity text eol=lf whitespace=-blank-at-eol
+*.uss text eol=lf
+*.uxml text eol=lf
+*.xml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+*.dll binary
+*.gif binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.psd binary
+*.tga binary
+*.tgz binary
+*.unitypackage binary
+*.zip binary
