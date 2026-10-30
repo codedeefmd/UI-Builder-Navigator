@@ -30,15 +30,17 @@ ProjectSettings/                             Unity 开发工程设置
 2. **02 · 样式来源与覆盖**：观察公共样式、组合选择器、继承、内联样式与级联结果。
 3. **03 · 父子布局与盒模型**：对照父子范围、Flex 参数、百分比尺寸和 ScrollView 布局父级。
 
+每页都有截图、画面位置说明和操作步骤，见[中文图文教程](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/README.md) / [English illustrated guide](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/README.en.md)。
+
 使用 `Window > UI Toolkit > USS Preview Navigator > 打开示例`，再选择对应页面。入口按插件当前语言打开中文或英文页面。首次使用会通过 Unity 原生 Sample API 导入到 `Assets/Samples/UI Builder Navigator/0.2.0/Learning Lab`；再次打开会复用已导入内容，不覆盖练习修改。
 
 通过该菜单首次打开某个页面时，插件会为它初始化 `1280 × 900` 画布、展开折叠的代码区并适配视口；已经存在的画布设置保持不变。如果直接在 Package Manager 的 Samples 中导入后双击 UXML，则使用 UI Builder 原生默认设置，不执行上述菜单初始化。示例用于 Editor 内学习，不代表 Player 运行效果。
 
 下面是在 Unity 6000.3.27f1 中实际打开第一张示例的截图：选中按钮后，UXML 标签、USS 规则和右侧诊断信息保持对应。
 
-![元素与代码导航示例](Documentation~/Images/learning-lab-navigation-zh.png)
+![元素与代码导航示例](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-navigation-zh.png)
 
-另外两张实际截图：[继承、内联与透明色](Documentation~/Images/learning-lab-cascade-zh.png)、[父子布局对照与画布高亮](Documentation~/Images/learning-lab-layout-zh.png)。
+另外两张实际截图：[继承、内联与透明色](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-cascade-zh.png)、[父子布局对照与画布高亮](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-layout-zh.png)。
 
 ## 安装到其他 Unity 项目
 

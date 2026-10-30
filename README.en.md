@@ -30,15 +30,17 @@ Three UXML/USS-only examples live under `Packages/com.poorl.ui-builder-navigator
 2. **02 · Style Sources & Cascade**: inspect shared styles, combined selectors, inheritance, inline styles, and cascade results.
 3. **03 · Parent Layout & Box Model**: compare parent-child bounds, Flex values, percentage sizes, and ScrollView layout parents.
 
+Each page has a screenshot walkthrough and steps to follow: [English illustrated guide](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/README.en.md) / [中文图文教程](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/README.md).
+
 Open `Window > UI Toolkit > USS Preview Navigator > Open Examples` and choose a page. The menu opens the Chinese or English page according to the plugin's current language. On first use, Unity's native Sample API imports Learning Lab to `Assets/Samples/UI Builder Navigator/0.2.0/Learning Lab`; later opens reuse the imported content without overwriting practice edits.
 
 The first menu-driven open of a page initializes a `1280 × 900` canvas, expands a collapsed code area, and fits the viewport. Existing canvas settings are preserved. Importing the Sample through Package Manager and double-clicking a UXML uses UI Builder's native defaults and does not perform this menu initialization. The examples are for Editor learning and do not represent Player behavior.
 
 This screenshot shows the first example in Unity 6000.3.27f1 with the Chinese UI. The selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics.
 
-![Elements and code navigation example](Documentation~/Images/learning-lab-navigation-zh.png)
+![Elements and code navigation example](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-navigation-zh.png)
 
-More Editor screenshots: [inheritance, inline styles, and alpha colors](Documentation~/Images/learning-lab-cascade-zh.png), [parent-child layout comparison and canvas bounds](Documentation~/Images/learning-lab-layout-zh.png).
+More Editor screenshots: [inheritance, inline styles, and alpha colors](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-cascade-zh.png), [parent-child layout comparison and canvas bounds](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-layout-zh.png).
 
 ## Install in another Unity project
 

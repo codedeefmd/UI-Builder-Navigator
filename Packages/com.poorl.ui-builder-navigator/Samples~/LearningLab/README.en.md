@@ -2,6 +2,10 @@
 
 Learning Lab is a set of UI Builder learning pages with no business code, external fonts, or external images. The three pages cover element-to-source navigation, reading the USS cascade, and comparing parent-child layout. Chinese and English pages use identical structures, `name` values, and classes; only their copy differs.
 
+Each section below includes a screenshot from Unity 6000.3.27f1, an explanation of the visible areas, and steps to follow. Screenshots use the Chinese UI; the English UI has the same element names, USS selectors, and control locations. Images ship with Learning Lab. Click an image to inspect it at full resolution; the sample UI itself does not load these documentation images.
+
+[01 · Element navigation](#01--navigation-elements-and-source) · [02 · USS cascade](#02--cascade-read-the-uss-cascade) · [03 · Parent-child layout](#03--layout-compare-parent-and-current-layout)
+
 ## Import and open
 
 The recommended entry point is the plugin menu:
@@ -30,7 +34,20 @@ Open:
 
 Goal: start from an element on the canvas or in the Hierarchy and locate its UXML tag and real related USS rules.
 
-Steps:
+### Screenshot walkthrough: one selection, three linked views
+
+[![Figure 1: the selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics](Documentation/Images/learning-lab-navigation-zh.png)](Documentation/Images/learning-lab-navigation-zh.png)
+
+Figure 1 selects the primary “Select me and locate code” button. Start with the selected canvas element, then compare its source and computed values using this table.
+
+| Screenshot area | What to look for | What to compare |
+| --- | --- | --- |
+| Blue canvas button / left Hierarchy | `#select-me-button` remains the current element | Inspect its name: navigating a rule should preserve the page element context |
+| Bottom-left UXML Preview | A location background on `<Button name="select-me-button" ...>` | Its `class="demo-button primary"` declares the two classes used by the button |
+| Bottom-right USS Preview | A location background on `.demo-button.primary` | Read the background, border, and text color declarations |
+| Right Diagnostics tab | The same button's box model, computed values, and style sources | Compare the declarations with the final calculated result |
+
+### Follow along
 
 1. Select `#select-me-button`.
 2. Confirm that the UXML Preview locates its `<Button>` tag.
@@ -50,7 +67,23 @@ Open:
 
 Goal: compare shared baselines, combined selectors, contextual overrides, inherited parent color, inline UXML styles, custom color properties, and alpha colors using real declarations.
 
-Steps:
+### Screenshot walkthrough: trace the actual color source
+
+[![Figure 2: inherited text color, an orange inline button, color variables, alpha colors, and the real source panel](Documentation/Images/learning-lab-cascade-zh.png)](Documentation/Images/learning-lab-cascade-zh.png)
+
+Figure 2 selects the teal text `#cascade-inherited-label`. Its own rule declares no `color`; the Inspector still shows a teal computed value because it is inherited from the parent.
+
+| Screenshot area | What to observe | What it demonstrates |
+| --- | --- | --- |
+| Parent color inheritance example in the center | The child Label is teal | The child inherits color because it does not declare its own |
+| Right `color` source row | Computed value `#1D7E70`, an inherited source pointing to `.cascade-inheritance-parent` | The final value and the element that declared it can be traced separately |
+| Bottom-right `.cascade-inherited-label` rule | Font size, weight, and wrapping, but no `color` | An element having its own USS rule does not mean every property originates there |
+| Orange center button | The inline-style button has a different color | Select `#cascade-inline-button` to find the orange declaration in the UXML `style` attribute |
+| Two blue swatches below | A solid swatch and one with alpha 0.35 | Select `#cascade-alpha-swatch` to compare `var(--cascade-alpha)`, the computed alpha color, and the read-only swatch |
+
+Click the navigable `color` source button in the Inspector. The USS Preview should locate the parent's color rule while the UXML Preview stays on the current child Label.
+
+### Follow along
 
 1. Select `#cascade-base-button`, then `#cascade-primary-button`.
 2. Open Related Styles and confirm that rules come from both `Shared/Examples.uss` and `02-Cascade/Cascade.uss`.
@@ -70,7 +103,23 @@ Open:
 
 Goal: compare parent-child canvas bounds and computed layout values to understand direction, Stretch/Center, percentage width, Grow/Shrink, min/max, and the effective layout parent inside a `ScrollView`.
 
-Steps:
+### Screenshot walkthrough: compare 50% with the actual bounds
+
+[![Figure 3: a 50%-width child, the parent-child layout comparison table, and purple parent content / blue current border bounds](Documentation/Images/learning-lab-layout-zh.png)](Documentation/Images/learning-lab-layout-zh.png)
+
+Figure 3 selects `#layout-percent-child` and hovers the expanded **Parent ↔ Current (Layout)** table on the right. The canvas bounds are read-only inspection overlays; moving away from the table clears them.
+
+| Screenshot area | What to observe | How to read it |
+| --- | --- | --- |
+| Stretch versus Center examples | The left button stretches; the right keeps its content width | Compare the parents' `align-items` to understand their influence on the children |
+| The 50% width track | Purple marks the parent content box; blue marks the current border box | Read percentage width relative to the actual layout parent's content box |
+| Right layout comparison table | This capture shows a `453 px` parent content width and a `227 px` child border width | Approximately 50%, including Unity's pixel rounding; resizing the canvas changes these values |
+| Bottom-right USS Preview | `width: 50%` in `.layout-percent-child` | This is the original declaration, rather than the computed pixel width |
+| Canvas tooltip | Parent content and current border dimensions appear together | Relate the canvas bounds, Inspector values, and USS declaration |
+
+To reproduce the capture, scroll to **50% width and Flex sizing**, select the blue `width: 50%` element, switch to **Diagnostics**, expand the layout comparison, and hover its table.
+
+### Follow along
 
 1. Compare the parent `flex-direction` values in the Row and Column examples.
 2. Select `#layout-stretch-button`, then `#layout-center-button`, and observe how parent alignment changes the child bounds.
@@ -94,6 +143,8 @@ LearningLab/
 ├─ 01-Navigation/
 ├─ 02-Cascade/
 ├─ 03-Layout/
+├─ Documentation/
+│  └─ Images/          Editor screenshots distributed with the Sample
 └─ Shared/
    ├─ Examples.uss
    └─ ProfileCard.*.uxml

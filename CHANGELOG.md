@@ -8,6 +8,7 @@
 - Added localized **Open Examples** menu entries that import the native Unity Sample on first use and open the page matching the plugin language.
 - Added first-open canvas setup for menu-launched examples while preserving existing document settings and imported practice edits.
 - Added the independent example-assets PowerShell test runner.
+- Added screenshot walkthroughs for all three Learning Lab pages in both guides; documentation images ship with the Sample and compatibility export.
 
 ### Fixed
 

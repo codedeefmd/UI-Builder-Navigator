@@ -2,6 +2,10 @@
 
 Learning Lab 是一组不依赖业务代码、外部字体或外部图片的 UI Builder 学习页面。三页示例分别覆盖元素与源码导航、USS 级联阅读、父子布局对照。中文与英文页面使用相同的结构、`name` 和 `class`，仅文案不同。
 
+下面每节都包含 Unity 6000.3.27f1 的实机截图、画面位置说明和可跟做的步骤。截图使用中文界面；英文界面的元素 `name`、USS 选择器和操作位置相同。图片随 Learning Lab 一起导入，阅读时可以点击图片查看原始尺寸；页面本身不需要加载这些说明图片。
+
+[01 · 元素与源码导航](#01--navigation元素与源码导航) · [02 · USS 级联](#02--cascade看懂-uss-级联) · [03 · 父子布局](#03--layout父容器与当前元素布局对照)
+
 ## 导入与打开
 
 推荐从插件菜单直接打开：
@@ -30,7 +34,20 @@ Package Manager 直接导入和双击资产不会触发上述初始化，而是�
 
 目标：从画布或 Hierarchy 中的元素，定位它的 UXML 标签和真实相关 USS 规则。
 
-操作：
+### 对照截图：一次选中，三处对应
+
+[![图 1：选中主按钮后，UXML 标签、USS 规则和右侧诊断信息保持对应](Documentation/Images/learning-lab-navigation-zh.png)](Documentation/Images/learning-lab-navigation-zh.png)
+
+图 1 中，画布选中的是“选中我并定位代码”按钮。先看中间选中了谁，再沿着下表对照源码和计算结果。
+
+| 图中位置 | 你应该看到什么 | 如何核对 |
+| --- | --- | --- |
+| 画布中的蓝色按钮 / 左侧 Hierarchy | `#select-me-button` 仍是当前元素 | 查看元素名称，避免把“查看样式”误当成改选页面元素 |
+| 左下 UXML Preview | 对应的 `<Button name="select-me-button" ...>` 开始标签有定位背景 | 标签里的 `class="demo-button primary"` 对应按钮的两个 class |
+| 右下 USS Preview | `.demo-button.primary` 的规则块有定位背景 | 能看到按钮的背景色、边框色和文字颜色声明 |
+| 右侧“诊断”页 | 同一个按钮的盒模型、最终数值和样式来源 | 选择器中的声明与最终计算值可以一起阅读 |
+
+### 跟着操作
 
 1. 选择 `#select-me-button`。
 2. 在底部 UXML Preview 中确认定位到对应的 `<Button>` 标签。
@@ -50,7 +67,23 @@ Package Manager 直接导入和双击资产不会触发上述初始化，而是�
 
 目标：用真实声明比较公共基线、组合选择器、上下文覆盖、父级颜色继承、UXML 内联样式、自定义颜色属性和透明色。
 
-操作：
+### 对照截图：找出颜色真正来自哪里
+
+[![图 2：父级颜色继承、橙色内联按钮、颜色变量与透明色，以及右侧真实来源](Documentation/Images/learning-lab-cascade-zh.png)](Documentation/Images/learning-lab-cascade-zh.png)
+
+图 2 选中的是绿色文字 `#cascade-inherited-label`。它自己的规则没有 `color`；右侧仍能显示绿色的最终值，是因为颜色来自父容器。
+
+| 图中位置 | 观察内容 | 这说明什么 |
+| --- | --- | --- |
+| 中间“父级 color 继承”区域 | 子 Label 的文字是青绿色 | 子元素没有声明 `color`，因此继承父级颜色 |
+| 右侧 `color` 来源行 | 最终值 `#1D7E70`，来源指向 `.cascade-inheritance-parent`，带有“继承”说明 | 最终值与真正声明该属性的元素可以分别追踪 |
+| 右下 `.cascade-inherited-label` 规则 | 有字号、字重和换行规则，没有 `color` | 当前元素有自己的 USS 规则，不代表每个属性都来自这条规则 |
+| 中间橙色按钮 | “内联声明按钮”与旁边控件颜色不同 | 改选 `#cascade-inline-button` 后，可在 UXML 的 `style` 中找到橙色声明 |
+| 下方两个蓝色色块 | 左侧为实色，右侧透明度为 0.35 | 改选 `#cascade-alpha-swatch`，对照 `var(--cascade-alpha)`、实际透明色与只读色块 |
+
+试着点击右侧 `color` 的可导航来源按钮：USS Preview 应跳到父容器的颜色规则，同时 UXML 仍对应当前子 Label。
+
+### 跟着操作
 
 1. 依次选择 `#cascade-base-button` 与 `#cascade-primary-button`。
 2. 查看相关样式，确认规则同时来自 `Shared/Examples.uss` 与 `02-Cascade/Cascade.uss`。
@@ -70,7 +103,23 @@ Package Manager 直接导入和双击资产不会触发上述初始化，而是�
 
 目标：对照父子画布范围及计算布局值，理解方向、Stretch/Center、百分比宽度、Grow/Shrink、min/max 和 `ScrollView` 的实际布局父级。
 
-操作：
+### 对照截图：把 50% 的声明与实际范围放在一起
+
+[![图 3：50% 宽度子元素、父子布局对照表，以及画布中的紫色父内容区与蓝色当前外框](Documentation/Images/learning-lab-layout-zh.png)](Documentation/Images/learning-lab-layout-zh.png)
+
+图 3 选中 `#layout-percent-child`，并悬停右侧展开的“父容器 ↔ 当前元素（布局）”表格。画布里的父子范围高亮是只读调试信息，移出表格后会消失。
+
+| 图中位置 | 观察内容 | 如何理解 |
+| --- | --- | --- |
+| 中间“Stretch 与 Center”区域 | 左侧按钮横向伸展，右侧按钮保持内容宽度 | 对照两个父容器的 `align-items`，理解父级如何影响子元素 |
+| 中间 50% 宽度轨道 | 紫色表示父内容区，蓝色表示当前元素外框 | 百分比宽度要结合实际布局父级的内容区阅读 |
+| 右侧布局对照表 | 截图当时父内容宽为 `453 px`，子外框宽为 `227 px` | 约为 50%，包含 Unity 布局的像素取整；改变画布后数值会变化 |
+| 右下 USS Preview | `.layout-percent-child` 中的 `width: 50%` | 这是原始声明，不是最终计算出的像素宽度 |
+| 画布上的浮层提示 | 同时显示父内容区与当前外框尺寸 | 可以直接把页面范围、右侧数值和 USS 声明关联起来 |
+
+要复现这张图，先滚动到“50% 宽度与 Flex 伸缩”，选中蓝色的 `width: 50%` 元素，再切到右侧“诊断”页，展开布局对照并把鼠标放到表格上。
+
+### 跟着操作
 
 1. 比较 Row 与 Column 示例的父级 `flex-direction`。
 2. 依次选择 `#layout-stretch-button` 与 `#layout-center-button`，观察父级对齐方式如何改变子元素范围。
@@ -94,6 +143,8 @@ LearningLab/
 ├─ 01-Navigation/
 ├─ 02-Cascade/
 ├─ 03-Layout/
+├─ Documentation/
+│  └─ Images/          三页说明的实机截图，随 Sample 一起分发
 └─ Shared/
    ├─ Examples.uss
    └─ ProfileCard.*.uxml
