@@ -2,7 +2,7 @@
 
 Learning Lab is a set of UI Builder learning pages with no business code, external fonts, or external images. The three pages cover element-to-source navigation, reading the USS cascade, and comparing parent-child layout. Chinese and English pages use identical structures, `name` values, and classes; only their copy differs.
 
-Each section below includes a screenshot from Unity 6000.3.27f1, an explanation of the visible areas, and steps to follow. Screenshots use the Chinese UI; the English UI has the same element names, USS selectors, and control locations. Images ship with Learning Lab. Click an image to inspect it at full resolution; the sample UI itself does not load these documentation images.
+Each section below includes a screenshot from Unity 6000.3.27f1, an explanation of the visible areas, and steps to follow. Screenshots in this guide show the English sample pages and English Navigator diagnostics. The Chinese guide has its own Chinese captures. Images ship with Learning Lab. Click an image to inspect it at full resolution; the sample UI itself does not load these documentation images.
 
 [01 · Element navigation](#01--navigation-elements-and-source) · [02 · USS cascade](#02--cascade-read-the-uss-cascade) · [03 · Parent-child layout](#03--layout-compare-parent-and-current-layout)
 
@@ -36,7 +36,7 @@ Goal: start from an element on the canvas or in the Hierarchy and locate its UXM
 
 ### Screenshot walkthrough: one selection, three linked views
 
-[![Figure 1: the selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics](Documentation/Images/learning-lab-navigation-zh.png)](Documentation/Images/learning-lab-navigation-zh.png)
+[![Figure 1: the selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics](Documentation/Images/learning-lab-navigation-en.png)](Documentation/Images/learning-lab-navigation-en.png)
 
 Figure 1 selects the primary “Select me and locate code” button. Start with the selected canvas element, then compare its source and computed values using this table.
 
@@ -69,7 +69,7 @@ Goal: compare shared baselines, combined selectors, contextual overrides, inheri
 
 ### Screenshot walkthrough: trace the actual color source
 
-[![Figure 2: inherited text color, an orange inline button, color variables, alpha colors, and the real source panel](Documentation/Images/learning-lab-cascade-zh.png)](Documentation/Images/learning-lab-cascade-zh.png)
+[![Figure 2: inherited text color, an orange inline button, color variables, alpha colors, and the real source panel](Documentation/Images/learning-lab-cascade-en.png)](Documentation/Images/learning-lab-cascade-en.png)
 
 Figure 2 selects the teal text `#cascade-inherited-label`. Its own rule declares no `color`; the Inspector still shows a teal computed value because it is inherited from the parent.
 
@@ -105,9 +105,9 @@ Goal: compare parent-child canvas bounds and computed layout values to understan
 
 ### Screenshot walkthrough: compare 50% with the actual bounds
 
-[![Figure 3: a 50%-width child, the parent-child layout comparison table, and purple parent content / blue current border bounds](Documentation/Images/learning-lab-layout-zh.png)](Documentation/Images/learning-lab-layout-zh.png)
+[![Figure 3: a 50%-width child, the parent-child layout comparison table, and purple parent content / blue current border bounds](Documentation/Images/learning-lab-layout-en.png)](Documentation/Images/learning-lab-layout-en.png)
 
-Figure 3 selects `#layout-percent-child` and hovers the expanded **Parent ↔ Current (Layout)** table on the right. The canvas bounds are read-only inspection overlays; moving away from the table clears them.
+Figure 3 selects `#layout-percent-child` and hovers the expanded **Parent ↔ Current Element (Layout)** table on the right. The canvas bounds are read-only inspection overlays; moving away from the table clears them.
 
 | Screenshot area | What to observe | How to read it |
 | --- | --- | --- |

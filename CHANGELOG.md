@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Matched the English README and Learning Lab walkthroughs to dedicated English sample and diagnostics screenshots.
+
 - Added the MIT license to the repository and UPM package, and updated package license metadata.
 - Replaced placeholder installation URLs and outdated pre-publication notes in both languages with the public repository address.
 

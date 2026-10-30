@@ -36,11 +36,11 @@ Open `Window > UI Toolkit > USS Preview Navigator > Open Examples` and choose a 
 
 The first menu-driven open of a page initializes a `1280 × 900` canvas, expands a collapsed code area, and fits the viewport. Existing canvas settings are preserved. Importing the Sample through Package Manager and double-clicking a UXML uses UI Builder's native defaults and does not perform this menu initialization. The examples are for Editor learning and do not represent Player behavior.
 
-This screenshot shows the first example in Unity 6000.3.27f1 with the Chinese UI. The selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics.
+This screenshot shows the first example in Unity 6000.3.27f1 with the English sample page and English diagnostics. The selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics.
 
-![Elements and code navigation example](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-navigation-zh.png)
+![Elements and code navigation example](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-navigation-en.png)
 
-More Editor screenshots: [inheritance, inline styles, and alpha colors](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-cascade-zh.png), [parent-child layout comparison and canvas bounds](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-layout-zh.png).
+More Editor screenshots: [inheritance, inline styles, and alpha colors](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-cascade-en.png), [parent-child layout comparison and canvas bounds](Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/learning-lab-layout-en.png).
 
 ## Install in another Unity project
 
