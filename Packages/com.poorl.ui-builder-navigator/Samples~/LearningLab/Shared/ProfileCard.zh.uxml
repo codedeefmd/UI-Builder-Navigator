@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- 独立模板用于演示嵌套 UXML：页面中的 Instance 可被选中，但模板内部节点来自此文件。 -->
+    <ui:VisualElement name="profile-card-root" class="profile-card">
+        <ui:VisualElement name="profile-avatar" class="profile-avatar">
+            <ui:Label text="UI" class="profile-avatar-text" />
+        </ui:VisualElement>
+        <ui:VisualElement class="profile-copy">
+            <ui:Label text="模板示例" name="profile-name" class="profile-name" />
+            <ui:Label text="内容由独立 UXML 提供" name="profile-role" class="profile-role" />
+        </ui:VisualElement>
+        <ui:Label text="已嵌套" name="profile-status" class="profile-status" />
+    </ui:VisualElement>
+</ui:UXML>

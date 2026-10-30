@@ -1,0 +1,190 @@
+/*
+ * 第 3 页专属样式：每个容器只设置少量可观察的布局属性，
+ * 让 Inspector 中的父子布局对照与画布范围高亮有清晰、可复现的输入。
+ */
+
+.layout-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.layout-panel {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    padding: 14px;
+    background-color: rgb(248, 250, 254);
+    border-width: 1px;
+    border-color: rgb(224, 230, 241);
+    border-radius: 8px;
+}
+
+.layout-panel-title {
+    color: rgb(48, 61, 87);
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 7px;
+}
+
+.layout-panel-copy {
+    color: rgb(91, 104, 128);
+    font-size: 13px;
+    white-space: normal;
+    margin-bottom: 9px;
+}
+
+.layout-row,
+.layout-flex-row {
+    flex-direction: row;
+}
+
+.layout-column {
+    flex-direction: column;
+}
+
+.layout-chip {
+    min-width: 54px;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    background-color: rgb(232, 238, 252);
+    color: rgb(57, 78, 124);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.layout-column .layout-chip {
+    margin-right: 0;
+}
+
+.layout-align-parent {
+    min-height: 82px;
+    flex-direction: column;
+    padding: 10px;
+    background-color: rgb(238, 243, 251);
+    border-radius: 6px;
+}
+
+.layout-align-center {
+    align-items: center;
+}
+
+.layout-stretch-button,
+.layout-center-button {
+    min-height: 34px;
+    white-space: normal;
+}
+
+.layout-percent-track {
+    width: 100%;
+    padding: 8px;
+    background-color: rgb(235, 239, 247);
+    border-radius: 6px;
+}
+
+.layout-percent-child {
+    width: 50%;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(100, 126, 226);
+    color: rgb(255, 255, 255);
+    border-radius: 5px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.layout-flex-row {
+    width: 100%;
+    min-width: 0;
+}
+
+.layout-fixed-child,
+.layout-flex-child {
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: rgb(255, 255, 255);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.layout-fixed-child {
+    width: 92px;
+    flex-shrink: 0;
+    margin-right: 8px;
+    background-color: rgb(102, 113, 137);
+}
+
+.layout-flex-child {
+    min-width: 90px;
+    max-width: 360px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: rgb(59, 143, 166);
+}
+
+.layout-minmax-child {
+    min-width: 120px;
+    max-width: 240px;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 6px;
+    background-color: rgb(239, 232, 252);
+    color: rgb(89, 61, 137);
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: normal;
+}
+
+.layout-scroll-shell {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    padding: 12px;
+    background-color: rgb(247, 249, 253);
+    border-width: 1px;
+    border-color: rgb(224, 230, 241);
+    border-radius: 8px;
+}
+
+.layout-scroll {
+    height: 130px;
+    margin-top: 8px;
+    background-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgb(224, 230, 241);
+    border-radius: 6px;
+}
+
+.layout-scroll-item {
+    min-height: 40px;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    color: rgb(71, 84, 108);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(233, 237, 245);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.layout-fact-note {
+    color: rgb(65, 93, 117);
+    font-size: 13px;
+    white-space: normal;
+    padding: 11px;
+    background-color: rgb(233, 246, 249);
+    border-left-width: 3px;
+    border-left-color: rgb(63, 151, 171);
+    border-radius: 6px;
+}

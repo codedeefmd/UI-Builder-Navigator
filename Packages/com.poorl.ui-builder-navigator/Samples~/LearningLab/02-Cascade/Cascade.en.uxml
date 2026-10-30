@@ -1,0 +1,93 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+        第 2 页使用真实 USS 规则演示级联，不模拟浏览器开发者工具，也不声称自动诊断覆盖原因。
+        所有示例均可在 UI Builder 原生 Preview 中直接选中并观察匹配规则与最终外观。
+    -->
+    <Style src="../Shared/Examples.uss" />
+    <Style src="Cascade.uss" />
+    <ui:VisualElement name="cascade-demo-root" class="demo-page">
+        <ui:ScrollView name="cascade-page-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-page-scroll">
+            <ui:VisualElement name="cascade-content" class="demo-content">
+                <ui:VisualElement name="cascade-header" class="demo-header">
+                    <ui:Label text="UI BUILDER NAVIGATOR · LEARNING LAB" class="demo-kicker" />
+                    <ui:Label text="02 · Read the USS Cascade" class="demo-title" />
+                    <ui:Label text="Compare how shared rules, page rules, inheritance, inline declarations, and color variables determine the final appearance." class="demo-lead" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-steps" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Suggested workflow" class="demo-section-title" />
+                        <ui:Label text="Select an element, read its real matching rules, then use the USS Preview to inspect each declaration." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-step-row">
+                        <ui:VisualElement name="cascade-step-select" class="demo-step">
+                            <ui:Label text="STEP 01" class="demo-step-number" />
+                            <ui:Label text="Select an example" class="demo-step-title" />
+                            <ui:Label text="Select the base button, then the primary button, and compare their classes and final colors." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-step-related" class="demo-step">
+                            <ui:Label text="STEP 02" class="demo-step-number" />
+                            <ui:Label text="Open Related Styles" class="demo-step-title" />
+                            <ui:Label text="Confirm that rules come from both shared Examples.uss and page-specific Cascade.uss." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-step-result" class="demo-step">
+                            <ui:Label text="STEP 03" class="demo-step-number" />
+                            <ui:Label text="Check the final result" class="demo-step-title" />
+                            <ui:Label text="Relate style sources to computed Inspector values without inferring the designer's intent." class="demo-step-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-selectors" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Base rules, combined selectors, and contextual overrides" class="demo-section-title" />
+                        <ui:Label text="All three buttons use real selectors. Hover the third button to observe the native :hover state." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cascade-button-group" class="cascade-button-group">
+                        <ui:Button name="cascade-base-button" text="Only .demo-button" class="demo-button" />
+                        <ui:Button name="cascade-primary-button" text=".demo-button.primary" class="demo-button primary" />
+                        <ui:Button name="cascade-hover-button" text="Hover to inspect :hover" class="demo-button cascade-hover-button" />
+                    </ui:VisualElement>
+                    <ui:Label text="Expected: the base button uses only the shared baseline. The primary button first matches the shared combined rule, then a more specific contextual rule in Cascade.uss changes it to purple." class="cascade-result" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-sources" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Inheritance and inline declarations" class="demo-section-title" />
+                        <ui:Label text="These examples use two different sources. Read the actual declarations and computed values without inventing a source chain." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cascade-grid">
+                        <ui:VisualElement name="cascade-inheritance-panel" class="cascade-panel">
+                            <ui:Label text="Inherited parent color" class="cascade-panel-title" />
+                            <ui:Label text="The parent declares teal; the child Label declares no color, so it inherits the parent color." class="cascade-panel-copy" />
+                            <ui:VisualElement name="cascade-inheritance-parent" class="cascade-inheritance-parent">
+                                <ui:Label name="cascade-inherited-label" text="My text color comes from the parent" class="cascade-inherited-label" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-inline-panel" class="cascade-panel">
+                            <ui:Label text="Inline UXML style" class="cascade-panel-title" />
+                            <ui:Label text="The orange color is written directly in the button's style attribute and is visible in the UXML Preview." class="cascade-panel-copy" />
+                            <ui:Button name="cascade-inline-button" text="Inline declaration button" class="demo-button" style="background-color: rgb(226, 126, 54); border-color: rgb(226, 126, 54); color: rgb(255, 255, 255);" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-variables" class="demo-section cascade-variable-scope">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Color variables and alpha" class="demo-section-title" />
+                        <ui:Label text="Both swatches read custom properties from this scope. The translucent swatch uses rgba with 0.35 alpha." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cascade-swatch-row">
+                        <ui:VisualElement name="cascade-solid-swatch" class="cascade-swatch cascade-solid-swatch">
+                            <ui:Label text="--cascade-accent · rgb" class="cascade-swatch-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-alpha-swatch" class="cascade-swatch cascade-alpha-swatch">
+                            <ui:Label text="--cascade-alpha · rgba(…, 0.35)" class="cascade-swatch-label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="Expected: the USS Preview shows the variable declarations and var(...) usage. The swatches are read-only views of the final colors." class="cascade-result" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

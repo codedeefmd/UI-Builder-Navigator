@@ -1,0 +1,93 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+        第 2 页使用真实 USS 规则演示级联，不模拟浏览器开发者工具，也不声称自动诊断覆盖原因。
+        所有示例均可在 UI Builder 原生 Preview 中直接选中并观察匹配规则与最终外观。
+    -->
+    <Style src="../Shared/Examples.uss" />
+    <Style src="Cascade.uss" />
+    <ui:VisualElement name="cascade-demo-root" class="demo-page">
+        <ui:ScrollView name="cascade-page-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-page-scroll">
+            <ui:VisualElement name="cascade-content" class="demo-content">
+                <ui:VisualElement name="cascade-header" class="demo-header">
+                    <ui:Label text="UI BUILDER NAVIGATOR · LEARNING LAB" class="demo-kicker" />
+                    <ui:Label text="02 · 看懂 USS 级联结果" class="demo-title" />
+                    <ui:Label text="比较公共样式、本页样式、继承、内联声明与颜色变量如何共同决定最终外观。" class="demo-lead" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-steps" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="建议操作路径" class="demo-section-title" />
+                        <ui:Label text="选择元素后阅读真实匹配规则，再回到 USS Preview 对照声明位置。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-step-row">
+                        <ui:VisualElement name="cascade-step-select" class="demo-step">
+                            <ui:Label text="步骤 01" class="demo-step-number" />
+                            <ui:Label text="选择一个示例" class="demo-step-title" />
+                            <ui:Label text="先选基础按钮，再选主按钮，比较两者的 class 与最终颜色。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-step-related" class="demo-step">
+                            <ui:Label text="步骤 02" class="demo-step-number" />
+                            <ui:Label text="查看相关样式" class="demo-step-title" />
+                            <ui:Label text="确认规则分别来自共享 Examples.uss 与本页 Cascade.uss。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-step-result" class="demo-step">
+                            <ui:Label text="步骤 03" class="demo-step-number" />
+                            <ui:Label text="核对最终结果" class="demo-step-title" />
+                            <ui:Label text="把样式来源与 Inspector 中的计算值对应起来，不自动推断设计意图。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-selectors" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="基础规则、组合选择器与上下文覆盖" class="demo-section-title" />
+                        <ui:Label text="三个按钮都使用真实选择器；鼠标悬浮到第三个按钮可观察原生 :hover 状态。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="cascade-button-group" class="cascade-button-group">
+                        <ui:Button name="cascade-base-button" text="仅 .demo-button" class="demo-button" />
+                        <ui:Button name="cascade-primary-button" text=".demo-button.primary" class="demo-button primary" />
+                        <ui:Button name="cascade-hover-button" text="悬浮观察 :hover" class="demo-button cascade-hover-button" />
+                    </ui:VisualElement>
+                    <ui:Label text="预期：基础按钮只取得公共基线；主按钮先匹配共享组合规则，再被 Cascade.uss 中更具体的上下文规则改变为紫色。" class="cascade-result" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-sources" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="继承与内联声明" class="demo-section-title" />
+                        <ui:Label text="这里展示两种不同来源；只读取实际声明和计算结果，不虚构来源链。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cascade-grid">
+                        <ui:VisualElement name="cascade-inheritance-panel" class="cascade-panel">
+                            <ui:Label text="父级 color 继承" class="cascade-panel-title" />
+                            <ui:Label text="父容器声明青绿色，子 Label 不声明 color，因此继承父级颜色。" class="cascade-panel-copy" />
+                            <ui:VisualElement name="cascade-inheritance-parent" class="cascade-inheritance-parent">
+                                <ui:Label name="cascade-inherited-label" text="我的文字颜色来自父容器" class="cascade-inherited-label" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-inline-panel" class="cascade-panel">
+                            <ui:Label text="UXML 内联样式" class="cascade-panel-title" />
+                            <ui:Label text="按钮的橙色直接写在 style 属性中，可在 UXML Preview 看到。" class="cascade-panel-copy" />
+                            <ui:Button name="cascade-inline-button" text="内联声明按钮" class="demo-button" style="background-color: rgb(226, 126, 54); border-color: rgb(226, 126, 54); color: rgb(255, 255, 255);" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="cascade-variables" class="demo-section cascade-variable-scope">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="颜色变量与透明色" class="demo-section-title" />
+                        <ui:Label text="两个色块读取同一作用域中的自定义属性；透明色块使用 rgba 的 0.35 透明度。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="cascade-swatch-row">
+                        <ui:VisualElement name="cascade-solid-swatch" class="cascade-swatch cascade-solid-swatch">
+                            <ui:Label text="--cascade-accent · rgb" class="cascade-swatch-label" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cascade-alpha-swatch" class="cascade-swatch cascade-alpha-swatch">
+                            <ui:Label text="--cascade-alpha · rgba(…, 0.35)" class="cascade-swatch-label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="预期：USS Preview 中可看到变量声明与 var(...) 使用位置；色块只读展示最终颜色。" class="cascade-result" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

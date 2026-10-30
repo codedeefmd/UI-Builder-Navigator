@@ -1,0 +1,310 @@
+/*
+ * Learning Lab 共用视觉规范。
+ * 本文件只负责示例页面的排版和外观，故意保留清晰、可追踪的选择器，
+ * 方便学习者通过“相关样式”和样式来源面板观察真实级联关系。
+ */
+
+.demo-page {
+    flex-grow: 1;
+    background-color: rgb(244, 247, 252);
+    color: rgb(31, 42, 61);
+    font-size: 14px;
+}
+
+.demo-page-scroll {
+    flex-grow: 1;
+}
+
+.demo-content {
+    width: 100%;
+    max-width: 1100px;
+    align-self: center;
+    padding: 24px;
+    flex-shrink: 0;
+}
+
+.demo-header {
+    margin-bottom: 24px;
+}
+
+.demo-kicker {
+    color: rgb(69, 97, 210);
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 8px;
+}
+
+.demo-title {
+    color: rgb(24, 34, 53);
+    font-size: 30px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 8px;
+}
+
+.demo-lead {
+    max-width: 760px;
+    color: rgb(85, 99, 124);
+    font-size: 15px;
+    white-space: normal;
+}
+
+.demo-section {
+    background-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgb(221, 227, 239);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+.demo-section-header {
+    margin-bottom: 16px;
+}
+
+.demo-section-title {
+    color: rgb(28, 39, 60);
+    font-size: 19px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 5px;
+}
+
+.demo-section-copy {
+    color: rgb(92, 105, 128);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.demo-step-row,
+.demo-component-row,
+.demo-template-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.demo-step {
+    min-width: 160px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-right: 6px;
+    margin-bottom: 10px;
+    background-color: rgb(246, 248, 255);
+    border-left-width: 3px;
+    border-left-color: rgb(92, 117, 229);
+    border-radius: 7px;
+    padding: 14px;
+}
+
+.demo-step-number {
+    color: rgb(76, 99, 210);
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.demo-step-title {
+    color: rgb(37, 49, 73);
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 4px;
+}
+
+.demo-step-copy {
+    color: rgb(92, 105, 128);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.demo-component-panel {
+    /* 180px 可在 350px 画布扣除页面与卡片内边距后保持单列布局。 */
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-right: 8px;
+    margin-bottom: 12px;
+}
+
+.demo-control-label {
+    color: rgb(60, 72, 95);
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.demo-button {
+    min-height: 38px;
+    border-radius: 7px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.demo-button.primary {
+    background-color: rgb(76, 103, 225);
+    border-color: rgb(76, 103, 225);
+    color: rgb(255, 255, 255);
+}
+
+.demo-button.primary:hover {
+    background-color: rgb(62, 88, 204);
+    border-color: rgb(62, 88, 204);
+}
+
+.demo-field,
+.demo-toggle {
+    min-height: 34px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.demo-field .unity-base-field__label,
+.demo-toggle .unity-toggle__label {
+    min-width: 0;
+    white-space: normal;
+}
+
+.demo-field .unity-base-field__input {
+    min-width: 0;
+}
+
+.demo-scroll-shell {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-bottom: 12px;
+    background-color: rgb(247, 249, 253);
+    border-width: 1px;
+    border-color: rgb(225, 230, 240);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.demo-inner-scroll {
+    /* 内容故意高于可视区，让 ScrollView 的原生 Scroller 在示例中稳定出现。 */
+    height: 150px;
+    margin-top: 8px;
+    background-color: rgb(255, 255, 255);
+    border-width: 1px;
+    border-color: rgb(225, 230, 240);
+    border-radius: 6px;
+}
+
+.demo-scroll-item {
+    min-height: 42px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(232, 236, 244);
+    justify-content: center;
+}
+
+.demo-scroll-item-title {
+    color: rgb(50, 63, 87);
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.demo-scroll-item-copy {
+    color: rgb(105, 117, 138);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.demo-note {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    background-color: rgb(239, 249, 248);
+    border-width: 1px;
+    border-color: rgb(191, 226, 221);
+    border-radius: 9px;
+    padding: 15px;
+}
+
+.demo-note-title {
+    color: rgb(27, 112, 104);
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 5px;
+}
+
+.demo-note-copy {
+    color: rgb(67, 102, 101);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.profile-card {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    background-color: rgb(250, 248, 255);
+    border-width: 1px;
+    border-color: rgb(219, 211, 243);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(102, 89, 214);
+    border-radius: 24px;
+    margin-right: 12px;
+}
+
+.profile-avatar-text {
+    color: rgb(255, 255, 255);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.profile-copy {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 70px;
+}
+
+.profile-name {
+    color: rgb(43, 39, 80);
+    font-size: 15px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 3px;
+}
+
+.profile-role {
+    color: rgb(105, 96, 145);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.profile-status {
+    flex-shrink: 0;
+    margin-left: 6px;
+    color: rgb(46, 126, 104);
+    background-color: rgb(228, 246, 239);
+    border-radius: 10px;
+    padding-left: 9px;
+    padding-right: 9px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+    -unity-font-style: bold;
+}

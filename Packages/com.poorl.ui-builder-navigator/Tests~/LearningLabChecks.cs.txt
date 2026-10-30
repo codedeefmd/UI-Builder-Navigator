@@ -1,0 +1,71 @@
+// 在 UI Builder 中打开任一 Learning Lab 页面，等待布局后通过 MCP execute_code 执行。
+// 读取真实的页面树和计算结果；不保存文档，不创建或修改业务对象。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .Single(item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var document = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var plugin = AppDomain.CurrentDomain.GetAssemblies().Single(item => item.GetName().Name == "UIBuilderUssNavigator.Editor");
+Func<string, UnityEngine.UIElements.VisualElement> find = name =>
+    UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.VisualElement>(document, name);
+Action<bool, string> check = (condition, message) => { if (!condition) throw new Exception(message); };
+var logs = new System.Collections.Generic.List<string>();
+var navigation = find("navigation-demo-root");
+var cascade = find("cascade-demo-root");
+var layout = find("layout-demo-root");
+check(navigation != null || cascade != null || layout != null, "请先打开 Learning Lab 示例");
+if (navigation != null)
+{
+    check(find("select-me-button") is UnityEngine.UIElements.Button, "主导航目标不是原生 Button");
+    check(find("demo-name-field") is UnityEngine.UIElements.TextField &&
+        find("demo-enabled-toggle") is UnityEngine.UIElements.Toggle, "原生字段或 Toggle 丢失");
+    var scroll = (UnityEngine.UIElements.ScrollView)find("demo-scroll");
+    check(scroll.contentContainer.childCount == 4 && scroll.contentContainer.hierarchy.parent == scroll.contentViewport,
+        "ScrollView 内部结构与教学说明不一致");
+    check(find("template-card-instance") is UnityEngine.UIElements.TemplateContainer, "嵌套 UXML 未实例化");
+    logs.Add("PASS 原生 Button / TextField / Toggle、ScrollView 内部节点、嵌套 UXML 实例");
+}
+if (cascade != null)
+{
+    var readerType = plugin.GetType("UIBuilderUssNavigator.StyleSourceReader");
+    var reader = Activator.CreateInstance(readerType, flags, null, new object[] { window.GetType().Assembly }, null);
+    Func<object, string, object> field = (instance, name) => instance.GetType().GetField(name, flags).GetValue(instance);
+    Func<string, string, object> row = (name, property) =>
+        ((System.Collections.IEnumerable)readerType.GetMethod("Read", flags).Invoke(reader, new object[] { find(name) }))
+        .Cast<object>().Single(item => (string)field(field(item, "Property"), "Name") == property);
+    var primary = row("cascade-primary-button", "background-color");
+    check((string)field(primary, "Value") == "#5B4ED2" &&
+        (string)field(field(primary, "Winner"), "SelectorText") == ".cascade-button-group .demo-button.primary",
+        "上下文组合选择器未覆盖公共样式");
+    var inline = row("cascade-inline-button", "background-color");
+    check((string)field(inline, "Value") == "#E27E36" && field(inline, "KindKey").ToString() == "Inline",
+        "UXML 内联样式来源错误");
+    var inherited = row("cascade-inherited-label", "color");
+    check((string)field(inherited, "Value") == "#1D7E70" && field(inherited, "KindKey").ToString() == "Inherited" &&
+        object.ReferenceEquals(field(field(inherited, "Winner"), "Owner"), find("cascade-inherited-label").hierarchy.parent),
+        "子 Label 未从父容器继承颜色");
+    var alpha = row("cascade-alpha-swatch", "background-color");
+    check((string)field(alpha, "Value") == "#3A77E059" &&
+        ((string)field(field(alpha, "Winner"), "Text")).Contains("var(--cascade-alpha)"),
+        "自定义属性与透明色的实际值或来源错误");
+    logs.Add("PASS 上下文覆盖、UXML 内联优先级、真实继承来源、var() 与 35% alpha");
+}
+if (layout != null)
+{
+    var stretch = find("layout-stretch-button");
+    var center = find("layout-center-button");
+    check(stretch.hierarchy.parent.resolvedStyle.alignItems == UnityEngine.UIElements.Align.Stretch &&
+        center.hierarchy.parent.resolvedStyle.alignItems == UnityEngine.UIElements.Align.Center &&
+        stretch.resolvedStyle.width > center.resolvedStyle.width, "Stretch / Center 示例没有产生预期的宽度差异");
+    var percent = find("layout-percent-child");
+    check(Math.Abs(percent.layout.width - percent.hierarchy.parent.contentRect.width * 0.5f) < 1f,
+        "50% 示例与父内容区宽度不符");
+    var flex = find("layout-flex-child");
+    check(flex.resolvedStyle.flexGrow == 1 && flex.resolvedStyle.flexShrink == 1 &&
+        flex.resolvedStyle.minWidth.value == 90 && flex.resolvedStyle.maxWidth.value == 360, "Flex / min-max 示例值错误");
+    var scroll = (UnityEngine.UIElements.ScrollView)find("layout-scroll");
+    check(scroll.contentContainer.childCount > 0 && scroll.contentContainer[0].hierarchy.parent == scroll.contentContainer,
+        "滚动内容没有使用实际 content container 布局父级");
+    logs.Add("PASS Stretch / Center、50% 父内容宽度、Grow / Shrink / min-max、ScrollView 实际布局父级");
+}
+return string.Join("\n", logs.ToArray());

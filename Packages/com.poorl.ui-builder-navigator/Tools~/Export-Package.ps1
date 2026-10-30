@@ -68,6 +68,14 @@ try {
             Test-UnityAssetPath $_.FullName
         })
 
+    # Samples~ 在 UPM 中由原生 Sample API 导入；兼容包把同一份源资产映射到可直接打开的 Samples。
+    # 使用原生导入后回填的 .meta，保证示例中的模板和样式引用继续使用一致的 GUID。
+    $sampleRoot = Join-Path $pluginRoot 'Samples~/LearningLab'
+    $items += @((Get-Item -LiteralPath $sampleRoot)) +
+        @(Get-ChildItem -LiteralPath $sampleRoot -Recurse -Force | Where-Object {
+            -not $_.FullName.EndsWith('.meta', [StringComparison]::OrdinalIgnoreCase)
+        })
+
     $utf8NoBom = [Text.UTF8Encoding]::new($false)
     $guids = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($item in $items) {
@@ -82,6 +90,7 @@ try {
         [IO.File]::Copy($metaPath, (Join-Path $guidDirectory 'asset.meta'))
 
         $relative = [IO.Path]::GetRelativePath($pluginRoot, $item.FullName).Replace('\', '/')
+        if ($relative.StartsWith('Samples~/')) { $relative = 'Samples/' + $relative.Substring('Samples~/'.Length) }
         $assetPath = if ($relative -eq '.') { $assetPrefix } else { "$assetPrefix/$relative" }
         [IO.File]::WriteAllText((Join-Path $guidDirectory 'pathname'), $assetPath, $utf8NoBom)
 

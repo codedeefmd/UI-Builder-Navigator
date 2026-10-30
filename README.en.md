@@ -6,11 +6,10 @@ An Editor extension for Unity 6 UI Builder that assists with UXML/USS previews, 
 
 ## Current scope
 
-- Package: `com.poorl.ui-builder-navigator`, version `0.1.0`
+- Package: `com.poorl.ui-builder-navigator`, version `0.2.0`
 - Editor assembly: `UIBuilderUssNavigator.Editor`
 - Menu: `Window > UI Toolkit > USS Preview Navigator`
-- The plugin UI supports Chinese and English; menu items appear as `启用 / 语言` or `Enabled / Language`
-- No demo is included at this stage
+- The plugin UI and Learning Lab examples support Chinese and English
 
 ## Repository structure
 
@@ -22,6 +21,24 @@ ProjectSettings/                             Unity development project settings
 ```
 
 Open the repository root in Unity Hub with **Unity 6000.3.27f1**. Unity loads the embedded package automatically through `Packages/manifest.json`; no manual plugin copy is required. The development project uses the Built-In Render Pipeline and retains the empty `SampleScene` and default Input System assets.
+
+## Learning Lab examples
+
+Three UXML/USS-only examples live under `Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab`. Follow them in order:
+
+1. **01 · Elements & Code Navigation**: navigate from the canvas or Hierarchy to UXML tags and related USS rules.
+2. **02 · Style Sources & Cascade**: inspect shared styles, combined selectors, inheritance, inline styles, and cascade results.
+3. **03 · Parent Layout & Box Model**: compare parent-child bounds, Flex values, percentage sizes, and ScrollView layout parents.
+
+Open `Window > UI Toolkit > USS Preview Navigator > Open Examples` and choose a page. The menu opens the Chinese or English page according to the plugin's current language. On first use, Unity's native Sample API imports Learning Lab to `Assets/Samples/UI Builder Navigator/0.2.0/Learning Lab`; later opens reuse the imported content without overwriting practice edits.
+
+The first menu-driven open of a page initializes a `1280 × 900` canvas, expands a collapsed code area, and fits the viewport. Existing canvas settings are preserved. Importing the Sample through Package Manager and double-clicking a UXML uses UI Builder's native defaults and does not perform this menu initialization. The examples are for Editor learning and do not represent Player behavior.
+
+This screenshot shows the first example in Unity 6000.3.27f1 with the Chinese UI. The selected button stays linked to its UXML tag, USS rule, and Inspector diagnostics.
+
+![Elements and code navigation example](Documentation~/Images/learning-lab-navigation-zh.png)
+
+More Editor screenshots: [inheritance, inline styles, and alpha colors](Documentation~/Images/learning-lab-cascade-zh.png), [parent-child layout comparison and canvas bounds](Documentation~/Images/learning-lab-layout-zh.png).
 
 ## Install in another Unity project
 
@@ -39,10 +56,11 @@ Alternatively, add this entry to the existing `dependencies` object in the targe
 
 ## Tests
 
-The package contains seven independent PowerShell test runners under `Tests~`:
+The package contains eight independent PowerShell test runners under `Tests~`:
 
 - `Run-CodePreviewSearchTests.ps1`
 - `Run-DiagnosticTextTests.ps1`
+- `Run-ExampleAssetsTests.ps1`
 - `Run-LocalizationTests.ps1`
 - `Run-UssRuleLocatorTests.ps1`
 - `Run-UssSyntaxHighlighterTests.ps1`

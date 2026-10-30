@@ -44,6 +44,13 @@ namespace UIBuilderUssNavigator
             string languageRoot = Root + L10n.Tr("语言/", "Language/");
             Add(languageRoot + "中文", 120, () => L10n.SetLanguage("zh"), () => L10n.Language == "zh");
             Add(languageRoot + "English", 121, () => L10n.SetLanguage("en"), () => L10n.Language == "en");
+            string examplesRoot = Root + L10n.Tr("打开示例/", "Open Examples/");
+            Add(examplesRoot + L10n.Tr("01 · 元素与代码导航", "01 · Elements & Code Navigation"), 140,
+                () => ExamplesLauncher.Open("01-Navigation/Navigation"), () => false);
+            Add(examplesRoot + L10n.Tr("02 · 样式来源与覆盖", "02 · Style Sources & Cascade"), 141,
+                () => ExamplesLauncher.Open("02-Cascade/Cascade"), () => false);
+            Add(examplesRoot + L10n.Tr("03 · 父子布局与盒模型", "03 · Parent Layout & Box Model"), 142,
+                () => ExamplesLauncher.Open("03-Layout/Layout"), () => false);
         }
 
         static void Add(string path, int priority, Action execute, Func<bool> checkedState)

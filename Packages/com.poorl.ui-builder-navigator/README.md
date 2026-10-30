@@ -24,6 +24,18 @@ Inspector 顶部右侧有 **中文 / English** 语言菜单，切换即时生效
 
 切换只更新现有控件的文字，保留当前选择、活动 USS、UXML/USS 定位、搜索词/结果/当前项、折叠和滚动状态。分组和来源类别使用稳定键/枚举，译文不参与匹配、解析或缓存身份。隐藏的诊断页记录语言失效，返回可见页后再读取来源链。
 
+## Learning Lab 示例
+
+包内 `Samples~/LearningLab` 提供三页不附加 C# 行为的中英文 UXML/USS 示例：
+
+1. **01 · 元素与代码导航**：练习 UXML 标签、相关样式与模板源码归属。
+2. **02 · 样式来源与覆盖**：查看共享样式、组合选择器、继承、内联样式和级联结果。
+3. **03 · 父子布局与盒模型**：对照父子范围、Flex 参数、百分比尺寸和 ScrollView 实际布局父级。
+
+从 **Window → UI Toolkit → USS Preview Navigator → 打开示例** 选择页面。三项菜单分别为“01 · 元素与代码导航”“02 · 样式来源与覆盖”“03 · 父子布局与盒模型”；切换到英文后对应显示为 **Open Examples** 下的英文名称，并打开 `.en.uxml`，中文则打开 `.zh.uxml`。
+
+首次使用时，Unity 原生 Sample API 会把 Learning Lab 导入 `Assets/Samples/UI Builder Navigator/0.2.0/Learning Lab`。再次通过菜单打开会复用已导入内容，不覆盖练习修改。每个页面首次通过菜单打开时初始化 `1280 × 900` 画布、展开折叠的代码区并适配视口；已有画布设置原样保留。若直接在 Package Manager 的 Samples 中导入后双击 UXML，则沿用 UI Builder 原生默认设置，不执行菜单初始化。示例用于 Editor 内学习，不代表 Player 行为。
+
 ## 使用
 
 1. 打开 UI Builder 和任意引用了 USS 的 UXML。
@@ -107,10 +119,16 @@ USS 区分选择器、属性名、数值与单位、字符串、函数和注释�
 
 ## 文件职责
 
+Learning Lab 在本独立工程的 Unity 6000.3.27f1（Windows Editor）中已验证：中英文三页均可打开；350px 画布下带教学样式的节点未横向溢出；元素/相关规则导航保持双预览定位；级联、真实继承、内联、变量透明色和父子布局计算值与说明一致。重新打开保留已导入练习修改及已有画布设置；跨版本导入保留旧练习文件。未以此推定 Player 或其他 Unity 版本兼容。
+
+`Tests~/LearningLabChecks.cs.txt` 和 `Tests~/LearningLabViewportChecks.cs.txt` 是用于 Unity MCP `execute_code` 的方法体：先打开示例并等待布局，再运行对应检查；后者检查当前画布尺寸，可先在 Canvas Size 改为 350px。它们与下面无需 Unity 的 PowerShell 独立测试分开运行。
+
 | 文件 | 职责 |
 | --- | --- |
 | `Editor/L10n.cs` | zh/en 语言偏好、格式化和版本通知；不修改源码或项目设置。 |
 | `Editor/NavigatorMenu.cs` | 当前语言下的顶部启用/语言菜单，隔离 Unity 动态菜单接口并在重载前清理自有路径。 |
+| `Editor/ExamplesLauncher.cs` | 按语言导入/打开三页示例，保留当前及旧版练习修改，交给原生流程处理未保存文档。 |
+| `Editor/ExampleCanvasSettings.cs` | 首次菜单打开后初始化示例画布；已有文档设置不变，设置只存入 Library。 |
 | `Editor/BuilderAccess.cs` | 读取原生选择、完整预览和序列化节点路径，隔离内部 API 的版本依赖。 |
 | `Editor/UssPreviewNavigator.cs` | 插件开关、窗口生命周期、两侧选择定位和点击取消提示。 |
 | `Editor/RelatedStylesMenu.cs` | 页面元素的“相关样式”子菜单、原生规则匹配、跨 USS 导航。 |
@@ -134,10 +152,11 @@ USS 区分选择器、属性名、数值与单位、字符串、函数和注释�
 | `Editor/SyntaxText.cs` | 两种高亮器共用的源码字面量转义。 |
 | `Editor/UIBuilderUssNavigator.Editor.asmdef` | 将插件限制为 Editor 程序集。 |
 | `Tests~/` | 独立定位和语法配色测试；Unity 不导入以 `~` 结尾的测试目录。 |
+| `Samples~/LearningLab/` | 中英文纯 UXML/USS 教学页、共享样式与嵌套模板，由 Sample 入口导入可编辑副本。 |
 
 ## 独立测试
 
-以下详细 Editor 交互记录来自迁移前工程，作为迁移基线保留；新开发工程尚未添加 Demo 页面。历史截图未迁入本仓库。独立测试可直接在本工程运行。
+以下详细 Editor 交互记录来自迁移前工程，作为迁移基线保留。独立测试可直接在本工程运行。
 
 在 PowerShell 中运行（每个脚本独立进程，避免 Add-Type 重复加载同名类型）：
 
@@ -148,6 +167,7 @@ pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-UxmlSy
 pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-UxmlElementLocatorTests.ps1'
 pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-CodePreviewSearchTests.ps1'
 pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-DiagnosticTextTests.ps1'
+pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-ExampleAssetsTests.ps1'
 pwsh -NoProfile -File 'Packages/com.poorl.ui-builder-navigator/Tests~/Run-LocalizationTests.ps1'
 ```
 

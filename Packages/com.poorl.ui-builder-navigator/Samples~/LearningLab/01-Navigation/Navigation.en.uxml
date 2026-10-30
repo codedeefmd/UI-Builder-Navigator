@@ -1,0 +1,83 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+        第 1 页只演示“元素 ↔ UXML ↔ USS”导航链路。
+        文案直接写在页面中，保证普通元素仍能在 Hierarchy 中逐个选中并定位源码。
+    -->
+    <ui:Template name="ProfileCard" src="../Shared/ProfileCard.en.uxml" />
+    <Style src="../Shared/Examples.uss" />
+    <ui:VisualElement name="navigation-demo-root" class="demo-page">
+        <ui:ScrollView name="navigation-page-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-page-scroll">
+            <ui:VisualElement name="navigation-content" class="demo-content">
+                <ui:VisualElement name="navigation-header" class="demo-header">
+                    <ui:Label text="UI BUILDER NAVIGATOR · LEARNING LAB" class="demo-kicker" />
+                    <ui:Label text="01 · Element and Code Navigation" class="demo-title" />
+                    <ui:Label text="Start from one canvas button and trace its UXML tag, related selector, and USS rule." class="demo-lead" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-steps" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Follow these three steps" class="demo-section-title" />
+                        <ui:Label text="Everything happens in UI Builder edit mode; Play Mode is not required." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-step-row">
+                        <ui:VisualElement name="step-select" class="demo-step">
+                            <ui:Label text="STEP 01" class="demo-step-number" />
+                            <ui:Label text="Select the primary button" class="demo-step-title" />
+                            <ui:Label text="Select “Select me and locate code” in the canvas or Hierarchy." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="step-uxml" class="demo-step">
+                            <ui:Label text="STEP 02" class="demo-step-number" />
+                            <ui:Label text="Inspect the UXML" class="demo-step-title" />
+                            <ui:Label text="The UXML Preview locates the opening tag for #select-me-button." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="step-uss" class="demo-step">
+                            <ui:Label text="STEP 03" class="demo-step-number" />
+                            <ui:Label text="Find related styles" class="demo-step-title" />
+                            <ui:Label text="Right-click the button, choose Related Styles, then open .demo-button.primary." class="demo-step-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-components" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Selectable native controls" class="demo-section-title" />
+                        <ui:Label text="Each control has a stable name so the canvas, Hierarchy, and source stay easy to correlate." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-component-row">
+                        <ui:VisualElement name="control-panel" class="demo-component-panel">
+                            <ui:Label text="Primary navigation target" class="demo-control-label" />
+                            <ui:Button name="select-me-button" text="Select me and locate code" class="demo-button primary" />
+                            <ui:Label text="Named field" class="demo-control-label" />
+                            <ui:TextField name="demo-name-field" label="Display name" value="UI Toolkit Learner" class="demo-field" />
+                            <ui:Toggle name="demo-enabled-toggle" label="Enable live preview" value="true" class="demo-toggle" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="scroll-panel" class="demo-scroll-shell">
+                            <ui:Label text="ScrollView internal nodes" class="demo-control-label" />
+                            <ui:Label text="Expand #demo-scroll in the Hierarchy to see Unity-generated viewport, content container, and scroller nodes." class="demo-section-copy" />
+                            <ui:ScrollView name="demo-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-inner-scroll">
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Viewport" class="demo-scroll-item-title" /><ui:Label text="Clips the visible content" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Content Container" class="demo-scroll-item-title" /><ui:Label text="The actual layout parent" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Scroller" class="demo-scroll-item-title" /><ui:Label text="Generated by the control when needed" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Source Tag" class="demo-scroll-item-title" /><ui:Label text="Internal nodes still map to the declaring ScrollView tag" class="demo-scroll-item-copy" /></ui:VisualElement>
+                            </ui:ScrollView>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-template" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Nested UXML template" class="demo-section-title" />
+                        <ui:Label text="Template instances and ordinary elements have different source ownership, which explains the gray hierarchy nodes." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-template-row">
+                        <ui:Instance template="ProfileCard" name="template-card-instance" />
+                        <ui:VisualElement name="template-explanation" class="demo-note">
+                            <ui:Label text="Expected result" class="demo-note-title" />
+                            <ui:Label text="Selecting the instance root locates its Instance tag in this page. Its inner content comes from ProfileCard.en.uxml and is not treated as an ordinary element declared directly here." class="demo-note-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

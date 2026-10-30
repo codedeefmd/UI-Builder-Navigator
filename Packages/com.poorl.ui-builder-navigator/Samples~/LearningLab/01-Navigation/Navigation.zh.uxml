@@ -1,0 +1,83 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+        第 1 页只演示“元素 ↔ UXML ↔ USS”导航链路。
+        文案直接写在页面中，保证普通元素仍能在 Hierarchy 中逐个选中并定位源码。
+    -->
+    <ui:Template name="ProfileCard" src="../Shared/ProfileCard.zh.uxml" />
+    <Style src="../Shared/Examples.uss" />
+    <ui:VisualElement name="navigation-demo-root" class="demo-page">
+        <ui:ScrollView name="navigation-page-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-page-scroll">
+            <ui:VisualElement name="navigation-content" class="demo-content">
+                <ui:VisualElement name="navigation-header" class="demo-header">
+                    <ui:Label text="UI BUILDER NAVIGATOR · LEARNING LAB" class="demo-kicker" />
+                    <ui:Label text="01 · 元素与代码导航" class="demo-title" />
+                    <ui:Label text="从画布中的一个按钮出发，依次找到它的 UXML 标签、相关选择器和 USS 规则。" class="demo-lead" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-steps" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="跟着这三步操作" class="demo-section-title" />
+                        <ui:Label text="操作都在 UI Builder 编辑模式中完成，不需要进入 Play Mode。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-step-row">
+                        <ui:VisualElement name="step-select" class="demo-step">
+                            <ui:Label text="步骤 01" class="demo-step-number" />
+                            <ui:Label text="选择主按钮" class="demo-step-title" />
+                            <ui:Label text="在画布或 Hierarchy 中选择“选中我并定位代码”。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="step-uxml" class="demo-step">
+                            <ui:Label text="步骤 02" class="demo-step-number" />
+                            <ui:Label text="查看 UXML" class="demo-step-title" />
+                            <ui:Label text="底部 UXML Preview 会定位到 #select-me-button 的开始标签。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="step-uss" class="demo-step">
+                            <ui:Label text="步骤 03" class="demo-step-number" />
+                            <ui:Label text="找到相关样式" class="demo-step-title" />
+                            <ui:Label text="右键按钮，选择“相关样式”，再跳转到 .demo-button.primary。" class="demo-step-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-components" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="可选择的原生控件" class="demo-section-title" />
+                        <ui:Label text="每个控件都有稳定 name，方便把画布、Hierarchy 与源码对应起来。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-component-row">
+                        <ui:VisualElement name="control-panel" class="demo-component-panel">
+                            <ui:Label text="主导航目标" class="demo-control-label" />
+                            <ui:Button name="select-me-button" text="选中我并定位代码" class="demo-button primary" />
+                            <ui:Label text="姓名字段" class="demo-control-label" />
+                            <ui:TextField name="demo-name-field" label="显示名称" value="UI Toolkit Learner" class="demo-field" />
+                            <ui:Toggle name="demo-enabled-toggle" label="启用实时预览" value="true" class="demo-toggle" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="scroll-panel" class="demo-scroll-shell">
+                            <ui:Label text="ScrollView 内部节点" class="demo-control-label" />
+                            <ui:Label text="展开 Hierarchy 中的 #demo-scroll，可以观察 Unity 自动生成的 viewport、content container 和 scroller。" class="demo-section-copy" />
+                            <ui:ScrollView name="demo-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-inner-scroll">
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Viewport" class="demo-scroll-item-title" /><ui:Label text="裁剪可见内容" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Content Container" class="demo-scroll-item-title" /><ui:Label text="实际布局父容器" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Scroller" class="demo-scroll-item-title" /><ui:Label text="由控件按需生成" class="demo-scroll-item-copy" /></ui:VisualElement>
+                                <ui:VisualElement class="demo-scroll-item"><ui:Label text="Source Tag" class="demo-scroll-item-title" /><ui:Label text="内部节点仍映射回声明它的 ScrollView 标签" class="demo-scroll-item-copy" /></ui:VisualElement>
+                            </ui:ScrollView>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="navigation-template" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="嵌套 UXML 模板" class="demo-section-title" />
+                        <ui:Label text="模板实例与普通元素的源码归属不同，适合练习识别 UI Builder 中的灰色节点。" class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-template-row">
+                        <ui:Instance template="ProfileCard" name="template-card-instance" />
+                        <ui:VisualElement name="template-explanation" class="demo-note">
+                            <ui:Label text="预期结果" class="demo-note-title" />
+                            <ui:Label text="选择实例根节点时会定位当前页面中的 Instance 标签；模板内部内容来自 ProfileCard.zh.uxml，不会被误认为当前页面直接声明的普通节点。" class="demo-note-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

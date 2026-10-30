@@ -7,6 +7,9 @@
 /Builds/
 /MemoryCaptures/
 /Recordings/
+# 原生 Sample 导入目录来自包内 Samples~，属于可编辑的本机练习副本。
+/Assets/Samples/
+/Assets/Samples.meta
 /.omx/
 
 # IDE-generated files

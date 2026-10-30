@@ -1,0 +1,132 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!--
+        第 3 页提供可直接检查的父子布局样本。
+        示例只陈述方向、尺寸、对齐和伸缩等布局事实，不把计算结果包装成自动诊断结论。
+    -->
+    <Style src="../Shared/Examples.uss" />
+    <Style src="Layout.uss" />
+    <ui:VisualElement name="layout-demo-root" class="demo-page">
+        <ui:ScrollView name="layout-page-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="demo-page-scroll">
+            <ui:VisualElement name="layout-content" class="demo-content">
+                <ui:VisualElement name="layout-header" class="demo-header">
+                    <ui:Label text="UI BUILDER NAVIGATOR · LEARNING LAB" class="demo-kicker" />
+                    <ui:Label text="03 · Compare Parent and Current Layout" class="demo-title" />
+                    <ui:Label text="Use canvas bounds and parent-child computed values to understand direction, alignment, percentage sizing, and Flex behavior." class="demo-lead" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="layout-steps" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Suggested workflow" class="demo-section-title" />
+                        <ui:Label text="Select a named element below, compare parent and child canvas bounds, then read the actual values in the layout comparison tab." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="demo-step-row">
+                        <ui:VisualElement name="layout-step-select" class="demo-step">
+                            <ui:Label text="STEP 01" class="demo-step-number" />
+                            <ui:Label text="Select the current element" class="demo-step-title" />
+                            <ui:Label text="Choose a stretch, center, 50%, or flex child example." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="layout-step-highlight" class="demo-step">
+                            <ui:Label text="STEP 02" class="demo-step-number" />
+                            <ui:Label text="Compare parent and child bounds" class="demo-step-title" />
+                            <ui:Label text="Observe the purple parent content box and blue current border box on the canvas." class="demo-step-copy" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="layout-step-read" class="demo-step">
+                            <ui:Label text="STEP 03" class="demo-step-number" />
+                            <ui:Label text="Read layout facts" class="demo-step-title" />
+                            <ui:Label text="Check direction, alignment, Grow, Shrink, Basis, and min/max without judging whether the design is correct." class="demo-step-copy" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="layout-directions" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Row and column" class="demo-section-title" />
+                        <ui:Label text="The children are identical; only the parent's flex-direction changes." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="layout-grid">
+                        <ui:VisualElement name="layout-row-panel" class="layout-panel">
+                            <ui:Label text="Row" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-row-container" class="layout-row">
+                                <ui:Label text="A" class="layout-chip" />
+                                <ui:Label text="B" class="layout-chip" />
+                                <ui:Label text="C" class="layout-chip" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="layout-column-panel" class="layout-panel">
+                            <ui:Label text="Column" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-column-container" class="layout-column">
+                                <ui:Label text="A" class="layout-chip" />
+                                <ui:Label text="B" class="layout-chip" />
+                                <ui:Label text="C" class="layout-chip" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="layout-alignment" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="Stretch versus center" class="demo-section-title" />
+                        <ui:Label text="Both parents use Column; the second only adds align-items: center." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="layout-grid">
+                        <ui:VisualElement name="layout-stretch-panel" class="layout-panel">
+                            <ui:Label text="Default stretch" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-stretch-parent" class="layout-align-parent">
+                                <ui:Button name="layout-stretch-button" text="Stretches horizontally" class="layout-stretch-button" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="layout-center-panel" class="layout-panel">
+                            <ui:Label text="Center" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-center-parent" class="layout-align-parent layout-align-center">
+                                <ui:Button name="layout-center-button" text="Keeps content width" class="layout-center-button" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="layout-sizing" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="50% width and Flex sizing" class="demo-section-title" />
+                        <ui:Label text="Select the named children and compare parent width, Grow, Shrink, Basis, and min/max." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="layout-grid">
+                        <ui:VisualElement name="layout-percent-panel" class="layout-panel">
+                            <ui:Label text="50% of the parent" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-percent-track" class="layout-percent-track">
+                                <ui:VisualElement name="layout-percent-child" class="layout-percent-child">
+                                    <ui:Label text="width: 50%" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="layout-flex-panel" class="layout-panel">
+                            <ui:Label text="Grow / Shrink / Min-Max" class="layout-panel-title" />
+                            <ui:VisualElement name="layout-flex-row" class="layout-flex-row">
+                                <ui:VisualElement name="layout-fixed-child" class="layout-fixed-child"><ui:Label text="Fixed 92px" /></ui:VisualElement>
+                                <ui:VisualElement name="layout-flex-child" class="layout-flex-child"><ui:Label text="Grow 1 · Shrink 1" /></ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="layout-minmax-child" class="layout-minmax-child"><ui:Label text="min 120 · max 240" /></ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="layout-scroll-section" class="demo-section">
+                    <ui:VisualElement class="demo-section-header">
+                        <ui:Label text="The effective ScrollView layout parent" class="demo-section-title" />
+                        <ui:Label text="The Hierarchy exposes the generated viewport and content container. Content items are actually arranged by the content container." class="demo-section-copy" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="layout-scroll-shell" class="layout-scroll-shell">
+                        <ui:Label text="Expand #layout-scroll, select a content item, and compare its direct layout parent." class="layout-panel-copy" />
+                        <ui:ScrollView name="layout-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden" class="layout-scroll">
+                            <ui:Label text="Item 01 · Inspect parent bounds" class="layout-scroll-item" />
+                            <ui:Label text="Item 02 · Inspect content width" class="layout-scroll-item" />
+                            <ui:Label text="Item 03 · Inspect direction" class="layout-scroll-item" />
+                            <ui:Label text="Item 04 · Inspect scroll range" class="layout-scroll-item" />
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:Label text="Scope of this page: the plugin presents Unity's computed layout facts and parent-child bounds; it does not automatically diagnose why the design produced them." class="layout-fact-note" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

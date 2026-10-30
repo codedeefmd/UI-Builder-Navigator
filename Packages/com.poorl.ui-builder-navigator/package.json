@@ -1,6 +1,6 @@
 {
   "name": "com.poorl.ui-builder-navigator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "UI Builder Navigator",
   "description": "Editor-only UI Builder extension with linked UXML/USS previews, syntax highlighting, search, style-source navigation, layout diagnostics and zh/en localization.",
   "unity": "6000.3",
@@ -11,5 +11,12 @@
   "licensesUrl": "https://github.com/codedeefmd/UI-Builder-Navigator/blob/main/LICENSE",
   "repository": { "type": "git", "url": "https://github.com/codedeefmd/UI-Builder-Navigator.git", "directory": "Packages/com.poorl.ui-builder-navigator" },
   "keywords": ["editor", "ui-toolkit", "ui-builder", "uxml", "uss", "diagnostics"],
-  "dependencies": {}
+  "dependencies": {},
+  "samples": [
+    {
+      "displayName": "Learning Lab",
+      "description": "Hands-on UI Builder examples with Chinese and English instructions. / UI Builder 中英文学习示例。",
+      "path": "Samples~/LearningLab"
+    }
+  ]
 }

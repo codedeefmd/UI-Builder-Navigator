@@ -24,7 +24,23 @@ You can also use **Window → UI Toolkit → USS Preview Navigator → Language*
 
 Localization covers extension tabs, diagnostics, search and copy menus, related-style navigation, tooltips, empty states and integration errors. Source code, CSS property names and keywords, selectors, filenames and element identifiers remain verbatim. Unity's own Inspector controls, menus and built-in preview titles follow Unity's language settings.
 
+## Learning Lab examples
+
+`Samples~/LearningLab` contains three bilingual UXML/USS examples with no attached C# behavior:
+
+1. **01 · Elements & Code Navigation**: practice UXML tag navigation, related styles, and template source ownership.
+2. **02 · Style Sources & Cascade**: inspect shared styles, combined selectors, inheritance, inline styles, and cascade results.
+3. **03 · Parent Layout & Box Model**: compare parent-child bounds, Flex values, percentage sizes, and the effective ScrollView layout parent.
+
+Choose a page under **Window → UI Toolkit → USS Preview Navigator → Open Examples**. The three entries are **01 · Elements & Code Navigation**, **02 · Style Sources & Cascade**, and **03 · Parent Layout & Box Model**. The launcher follows the plugin language, opening `.en.uxml` in English or `.zh.uxml` in Chinese.
+
+On first use, Unity's native Sample API imports Learning Lab to `Assets/Samples/UI Builder Navigator/0.2.0/Learning Lab`. Later menu opens reuse the imported content without overwriting practice edits. The first menu-driven open of each page initializes a `1280 × 900` canvas, expands a collapsed code area, and fits the viewport; existing canvas settings remain unchanged. Importing the Sample through Package Manager and double-clicking a UXML uses UI Builder's native defaults instead, without the menu initialization. These examples are for Editor learning and do not represent Player behavior.
+
 ## Features
+
+Learning Lab was checked in this standalone project with Unity 6000.3.27f1 on Windows: all three pages open in both languages; styled teaching elements stay horizontally within a 350px canvas; element/rule navigation retains both source locations; cascade, inheritance, inline, alpha variables, and parent-child computed values match the instructions. Reopening preserves imported edits and existing canvas settings. A cross-version import check preserved the earlier exercise files. These checks do not establish Player or other Unity-version compatibility.
+
+`Tests~/LearningLabChecks.cs.txt` and `Tests~/LearningLabViewportChecks.cs.txt` are method bodies for Unity MCP `execute_code`. Open an example and wait for layout before running them. The latter checks the current canvas width; set Canvas Size to 350px for the narrow-layout check. Run these separately from the standalone PowerShell tests.
 
 | Area | Behavior |
 | --- | --- |
@@ -60,7 +76,7 @@ The extension does not edit Unity installation files, PackageCache, UXML/USS, sc
 
 ## Verification and export
 
-`Tests~` contains independent PowerShell assertions and Editor integration check method bodies for Unity MCP. These test sources are excluded from imported assets and exported packages. See the Chinese README for the complete check sequence.
+`Tests~` contains eight independent PowerShell test runners, including `Run-ExampleAssetsTests.ps1`, plus Editor integration check method bodies for Unity MCP. These test sources are excluded from imported assets and exported packages. See the Chinese README for the complete command list.
 
 Export with PowerShell 7:
 

@@ -1,6 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-10-30
+
+### Added
+
+- Added the bilingual, UXML/USS-only Learning Lab Sample with pages for source navigation, cascade inspection, and parent-child layout diagnostics.
+- Added localized **Open Examples** menu entries that import the native Unity Sample on first use and open the page matching the plugin language.
+- Added first-open canvas setup for menu-launched examples while preserving existing document settings and imported practice edits.
+- Added the independent example-assets PowerShell test runner.
 
 ### Fixed
 

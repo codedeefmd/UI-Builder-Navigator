@@ -1,0 +1,120 @@
+/*
+ * 第 2 页专属样式：用真实的选择器、继承、内联样式和自定义属性演示 USS 级联。
+ * Shared/Examples.uss 提供公共基线；本文件故意只覆盖本页需要比较的规则。
+ */
+
+.cascade-grid,
+.cascade-button-group,
+.cascade-swatch-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cascade-panel {
+    min-width: 180px;
+    flex-basis: 0;
+    flex-grow: 1;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    padding: 14px;
+    background-color: rgb(248, 250, 254);
+    border-width: 1px;
+    border-color: rgb(224, 230, 241);
+    border-radius: 8px;
+}
+
+.cascade-panel-title {
+    color: rgb(48, 61, 87);
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin-bottom: 6px;
+}
+
+.cascade-panel-copy {
+    color: rgb(91, 104, 128);
+    font-size: 13px;
+    white-space: normal;
+    margin-bottom: 10px;
+}
+
+.cascade-button-group .demo-button {
+    min-width: 150px;
+    flex-grow: 1;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+/* 比 Shared 中的 .demo-button.primary 更具体，便于观察两个 USS 的真实级联结果。 */
+.cascade-button-group .demo-button.primary {
+    background-color: rgb(91, 78, 210);
+    border-color: rgb(91, 78, 210);
+}
+
+.cascade-hover-button:hover {
+    background-color: rgb(222, 243, 239);
+    border-color: rgb(73, 158, 143);
+    color: rgb(27, 105, 94);
+}
+
+.cascade-inheritance-parent {
+    color: rgb(29, 126, 112);
+    padding: 12px;
+    background-color: rgb(235, 249, 246);
+    border-left-width: 3px;
+    border-left-color: rgb(62, 164, 147);
+    border-radius: 6px;
+}
+
+.cascade-inherited-label {
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.cascade-variable-scope {
+    --cascade-accent: rgb(58, 119, 224);
+    --cascade-alpha: rgba(58, 119, 224, 0.35);
+}
+
+.cascade-swatch {
+    min-width: 150px;
+    min-height: 82px;
+    flex-basis: 0;
+    flex-grow: 1;
+    justify-content: flex-end;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.cascade-solid-swatch {
+    background-color: var(--cascade-accent);
+}
+
+.cascade-alpha-swatch {
+    background-color: var(--cascade-alpha);
+    border-width: 1px;
+    border-color: rgb(58, 119, 224);
+}
+
+.cascade-swatch-label {
+    color: rgb(255, 255, 255);
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.cascade-alpha-swatch .cascade-swatch-label {
+    color: rgb(35, 67, 112);
+}
+
+.cascade-result {
+    color: rgb(67, 82, 108);
+    font-size: 13px;
+    white-space: normal;
+    padding: 10px;
+    background-color: rgb(243, 246, 252);
+    border-radius: 6px;
+}

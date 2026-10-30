@@ -1,0 +1,17 @@
+// 打开任一 Learning Lab 页面，用原生 Canvas Size 改为 350px（或其他目标宽度），等待布局后执行。
+// 检查带教学样式的可见节点是否横向超出画布；不修改布局，不据此推定 Player 兼容性。
+var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+var window = Resources.FindObjectsOfTypeAll<UnityEditor.EditorWindow>()
+    .Single(item => item.GetType().FullName == "Unity.UI.Builder.Builder");
+var document = (UnityEngine.UIElements.VisualElement)window.GetType().GetProperty("documentRootElement", flags).GetValue(window, null);
+var root = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(document, null, "demo-page").First();
+var bounds = root.worldBound;
+var nodes = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(root).ToList()
+    .Where(item => item.visible && item.resolvedStyle.display != UnityEngine.UIElements.DisplayStyle.None &&
+        item.GetClasses().Any(name => name.StartsWith("demo-") || name.StartsWith("layout-") ||
+            name.StartsWith("cascade-") || name.StartsWith("profile-"))).ToArray();
+var overflow = nodes.Where(item => item.worldBound.xMin < bounds.xMin - 1f || item.worldBound.xMax > bounds.xMax + 1f)
+    .Select(item => item.name + "." + string.Join(".", item.GetClasses().ToArray()) + ":" + item.layout).ToArray();
+if (overflow.Length > 0) throw new Exception(string.Join("\n", overflow));
+return "PASS " + root.name + " authored elements inside " + root.layout.width + "px canvas; checked " + nodes.Length;
