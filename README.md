@@ -4,6 +4,10 @@
 
 用于 Unity 6 UI Builder 的 Editor 扩展，为 UXML/USS 预览、样式定位和布局诊断提供辅助功能。可作为独立 UPM 包安装到其他 Unity 项目。
 
+[![UI Builder Navigator 中文实机演示封面](Documentation~/Promotion/media/bilibili-cover-zh.png)](Documentation~/Promotion/media/ui-builder-navigator-demo-zh.mp4)
+
+实机演示：[中文 MP4 · 42 秒](Documentation~/Promotion/media/ui-builder-navigator-demo-zh.mp4) / [English MP4 · 42 seconds](Documentation~/Promotion/media/ui-builder-navigator-demo-en.mp4)。两版均附字幕，展示源码跳转、样式来源和父子布局高亮。
+
 ## 当前范围
 
 - 包名：`com.poorl.ui-builder-navigator`，版本：`0.2.0`

@@ -4,6 +4,10 @@ English | [中文](README.md)
 
 An Editor extension for Unity 6 UI Builder that assists with UXML/USS previews, style navigation, and layout diagnostics. Install it in other Unity projects as an independent UPM package.
 
+[![UI Builder Navigator English Editor demo cover](Documentation~/Promotion/media/social-preview-en.png)](Documentation~/Promotion/media/ui-builder-navigator-demo-en.mp4)
+
+Editor demos: [English MP4 · 42 seconds](Documentation~/Promotion/media/ui-builder-navigator-demo-en.mp4) / [中文 MP4 · 42 秒](Documentation~/Promotion/media/ui-builder-navigator-demo-zh.mp4). Both include captions and demonstrate source navigation, style sources, and parent-child layout overlays.
+
 ## Current scope
 
 - Package: `com.poorl.ui-builder-navigator`, version `0.2.0`

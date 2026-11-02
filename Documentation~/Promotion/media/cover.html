@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>UI Builder Navigator · Share cover</title>
+  <style>
+    /* 固定平台尺寸的分享封面源文件：单一靛蓝强调色，产品名称与真实 Editor 截图构成主视觉。
+       文案顺序为产品名、用途、三项能力、仓库及实测范围；静态导出不引入动画或外部字体。
+       ?lang=en 导出 1280×640 GitHub 预览图，?lang=zh 导出 1280×720 中文视频封面。 */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #111722; }
+    body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: #f4f6fc; }
+    .cover { position: relative; width: 1280px; height: 640px; overflow: hidden; }
+    .cover[data-language="zh"] { height: 720px; }
+    .kicker { position: absolute; top: 46px; left: 56px; color: #9caeff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+    h1 { position: absolute; top: 108px; left: 56px; margin: 0; font-size: 56px; line-height: 1.06; letter-spacing: -1.8px; font-weight: 650; }
+    .accent { position: absolute; top: 250px; left: 57px; width: 48px; height: 3px; background: #8298ff; }
+    .summary { position: absolute; top: 272px; left: 56px; width: 395px; margin: 0; font-size: 25px; line-height: 1.32; font-weight: 500; white-space: pre-line; }
+    .features { position: absolute; top: 373px; left: 56px; display: grid; gap: 15px; color: #c4cede; font-size: 17px; }
+    .features span { display: flex; align-items: center; gap: 13px; }
+    .features span::before { content: ""; width: 14px; height: 1px; background: #8298ff; }
+    .screenshot { position: absolute; top: 126px; left: 504px; width: 760px; height: auto; border: 1px solid #414b60; box-shadow: 0 20px 65px #0005; }
+    .metadata { position: absolute; left: 56px; bottom: 100px; color: #9caeff; font-size: 14px; letter-spacing: 1px; }
+    footer { position: absolute; bottom: 0; left: 56px; right: 56px; height: 61px; border-top: 1px solid #344052; }
+    .repository { position: absolute; left: 0; top: 15px; color: #e1e7f1; font-size: 15px; }
+    .compatibility { position: absolute; right: 0; top: 16px; color: #aab7ca; font-size: 12px; }
+    [data-language="zh"] h1 { top: 140px; }
+    [data-language="zh"] .accent { top: 282px; }
+    [data-language="zh"] .summary { top: 308px; font-size: 29px; line-height: 1.4; }
+    [data-language="zh"] .features { top: 417px; font-size: 18px; }
+    [data-language="zh"] .screenshot { top: 174px; }
+  </style>
+</head>
+<body>
+  <main class="cover" data-language="en" aria-label="UI Builder Navigator share cover">
+    <div class="kicker">UNITY EDITOR EXTENSION</div>
+    <h1>UI Builder<br>Navigator</h1>
+    <div class="accent"></div>
+    <p class="summary">Select an element.<br>Follow its source.</p>
+    <div class="features">
+      <span>Linked UXML ↔ USS</span>
+      <span>Trace style sources</span>
+      <span>Inspect parent &amp; child layout</span>
+    </div>
+    <img class="screenshot" alt="Real UI Builder Navigator source navigation and diagnostics in Unity Editor">
+    <div class="metadata">MIT · UPM · zh / en</div>
+    <footer>
+      <div class="repository">github.com/codedeefmd/UI-Builder-Navigator</div>
+      <div class="compatibility">Tested: Unity 6000.3.27f1 · Windows Editor</div>
+    </footer>
+  </main>
+  <script>
+    // 仅使用受控的双语文案和仓库内实机截图；查询参数不参与 HTML 拼接。
+    const language = new URLSearchParams(location.search).get('lang') === 'zh' ? 'zh' : 'en';
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+    document.querySelector('.cover').dataset.language = language;
+    const root = '../../../Packages/com.poorl.ui-builder-navigator/Samples~/LearningLab/Documentation/Images/';
+    document.querySelector('.screenshot').src = root + 'learning-lab-navigation-' + language + '.png';
+    if (language === 'zh') {
+      document.querySelector('.kicker').textContent = 'UNITY 编辑器扩展';
+      document.querySelector('.summary').textContent = '选中元素，\n跟到源码。';
+      const text = ['UXML ↔ USS 源码联动', '追踪样式真实来源', '对照父子布局与盒模型'];
+      document.querySelectorAll('.features span').forEach((element, index) => element.textContent = text[index]);
+      document.querySelector('.compatibility').textContent = '已验证：Unity 6000.3.27f1 · Windows Editor';
+    }
+  </script>
+</body>
+</html>
