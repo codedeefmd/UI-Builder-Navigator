@@ -1,6 +1,6 @@
-# Reddit moderator-review request — unsent draft
+# Reddit moderator-review request — sent record
 
-This is a separate message draft, not an additional community post. It has not been sent. Sending it requires the author's explicit authorization.
+Sent once on 2026-11-02 after the author's explicit authorization. Reddit created a conversation showing `r/Unity3D` as the recipient, the subject below, and the complete message. A moderator response is pending. This was a separate review request; the community post was not reposted.
 
 ## Recipient
 

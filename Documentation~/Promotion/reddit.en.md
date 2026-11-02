@@ -2,7 +2,7 @@
 
 Intended community: `r/Unity3D`
 
-Submission status, 2026-11-02: [submitted post](https://www.reddit.com/r/Unity3D/comments/1xllk46/i_built_an_mitlicensed_ui_builder_extension_for/) with the real English Editor video and `Resources/Tutorial` flair. AutoModerator removed it because the account did not meet the reputation requirement: at least 50 total karma or 20 karma in `r/Unity3D`. Keep the existing post; do not delete and repost. A moderator-review request is drafted in `reddit-moderator-review.en.md` but has not been sent.
+Submission status, 2026-11-02: [submitted post](https://www.reddit.com/r/Unity3D/comments/1xllk46/i_built_an_mitlicensed_ui_builder_extension_for/) with the real English Editor video and `Resources/Tutorial` flair. AutoModerator removed it because the account did not meet the reputation requirement: at least 50 total karma or 20 karma in `r/Unity3D`. Keep the existing post; do not delete and repost. After explicit author approval, one moderator-review request was sent on the same day and verified in the Reddit conversation. Its recipient, subject, and body are recorded in `reddit-moderator-review.en.md`. A response is pending.
 
 ## Suggested title
 
