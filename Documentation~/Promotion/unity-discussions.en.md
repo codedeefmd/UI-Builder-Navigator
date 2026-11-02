@@ -39,6 +39,12 @@ The Learning Lab is available under **Open Examples** in the same menu.
 Repository and documentation:
 <https://github.com/codedeefmd/UI-Builder-Navigator>
 
+Release and downloads:
+<https://github.com/codedeefmd/UI-Builder-Navigator/releases/tag/v0.2.0>
+
+42-second Editor demo with English captions:
+<https://github.com/codedeefmd/UI-Builder-Navigator/releases/download/v0.2.0/ui-builder-navigator-demo-en.mp4>
+
 The project is licensed under MIT. It has been tested with **Unity 6000.3.27f1 on Windows Editor**. The integration uses internal UI Builder Editor APIs; compatibility with other Unity versions and operating systems is not yet verified.
 
 I would especially appreciate feedback on:

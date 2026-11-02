@@ -1,6 +1,6 @@
 # Promotion Materials / 推广材料
 
-本目录保存 UI Builder Navigator `0.2.0` 的对外发布草稿。**截至目前，这些文案尚未发布到 Unity Discussions、Reddit 或哔哩哔哩。**
+本目录保存 UI Builder Navigator `0.2.0` 的发布说明、社区文案和演示素材。**GitHub Release 已正式发布；社区文案尚未发布到 Unity Discussions、Reddit 或哔哩哔哩。**
 
 ## 文件用途
 
@@ -20,12 +20,13 @@
 
 两张 PNG 基于现有 Unity Editor 实机截图制作，用作分享卡片和视频封面。两条 MP4 则是在 Unity 6000.3.27f1 Windows Editor 中实际运行插件、自动触发原生选择/来源导航/布局悬停回调并逐帧采集窗口得到的实机演示，字幕已烧录，无旁白；临时 Editor 驱动已清除。录屏约 8fps 采集，按真实时间线导出为 30fps。
 
-## 2026-11-02 发布准备状态
+## 2026-11-02 发布状态
 
 - GitHub 仓库简介与 8 个 Topics 已更新。
-- GitHub [Releases 中的 `v0.2.0` 草稿](https://github.com/codedeefmd/UI-Builder-Navigator/releases) 已创建，附带安装包和中英文实机演示，尚未公开发布；登录仓库管理账号后可查看草稿。
+- GitHub [`v0.2.0` Release](https://github.com/codedeefmd/UI-Builder-Navigator/releases/tag/v0.2.0) 已于北京时间 2026-11-02 10:04 正式发布，附带安装包和中英文实机演示。安装包已通过匿名下载与 SHA-256 一致性检查。
 - `media/social-preview-en.png` 已准备，但当前自动化浏览器未登录 GitHub，尚未设置仓库的 Social preview。登录后可从 **Settings → Social preview** 上传该 PNG。
-- 中英文实机短片、封面、社区稿与 Release 说明已经准备好；社区帖子仍待作者审阅和发布。
+- Unity Discussions 与 Reddit 文稿已获作者确认，尚未发布；发布后在本页记录帖子链接。
+- 中英文实机短片、封面及哔哩哔哩文稿均已准备好。
 
 ## 统一事实边界
 
@@ -39,7 +40,7 @@
 
 ## 建议发布顺序
 
-1. 审阅 GitHub `v0.2.0` Release 草稿及其安装包后正式发布。
+1. 已完成：正式发布 GitHub `v0.2.0` Release，并核对公开安装包。
 2. 使用本目录已完成的中英文实机短片，必要时根据 `recording-script.md` 增补旁白。
 3. 发布 Unity Discussions 主题，收集 UI Toolkit 开发者对兼容性和工作流的反馈。
 4. 发帖当天重新核对 `r/Unity3D` 当前规则与同项目发帖频率，再发布 Reddit 主题。2026-10-30 查阅时的限制是同一项目 7 天内最多 2 帖；这只是历史快照，不能代替发帖当天的规则。

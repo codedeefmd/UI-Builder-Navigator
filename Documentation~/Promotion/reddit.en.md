@@ -31,6 +31,12 @@ https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.
 Repository, screenshots, documentation, and issue tracker:
 <https://github.com/codedeefmd/UI-Builder-Navigator>
 
+Release and downloads:
+<https://github.com/codedeefmd/UI-Builder-Navigator/releases/tag/v0.2.0>
+
+42-second Editor demo with English captions:
+<https://github.com/codedeefmd/UI-Builder-Navigator/releases/download/v0.2.0/ui-builder-navigator-demo-en.mp4>
+
 Tested with **Unity 6000.3.27f1 on Windows Editor**. It integrates with internal UI Builder Editor APIs; compatibility with other Unity versions and operating systems is not yet verified.
 
 I’d like feedback from people who actively use UI Toolkit: which missing link in UI Builder slows you down most—source navigation, cascade visibility, or parent/layout inspection? If you test it, please mention your Unity version and OS, especially if you find a template or nested-control case that maps to the wrong source.
