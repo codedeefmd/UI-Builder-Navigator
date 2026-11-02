@@ -2,6 +2,8 @@
 
 Target category: <https://discussions.unity.com/c/ui/ui-toolkit/201>
 
+Submission status, 2026-11-02: submitted once with an English Editor screenshot, the public demo link, and the `Conversation` / `6.3` tags. Unity returned **Post Needs Approval**. The topic is listed in the author's [pending activity](https://discussions.unity.com/u/poorlittleape/activity/pending), which requires the author's signed-in session. There is no public topic URL yet.
+
 ## Suggested title
 
 UI Builder Navigator — linked UXML/USS navigation and layout diagnostics for Unity 6
