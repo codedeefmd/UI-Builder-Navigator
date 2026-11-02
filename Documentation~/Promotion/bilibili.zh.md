@@ -8,10 +8,13 @@
 
 - Unity UI Builder 看不懂 UXML/USS 对应关系？这个开源插件可以直接定位
 - 从元素跳到 UXML 和 USS：我做了一个 Unity UI Builder 辅助插件
+- 初学 Unity 6 UI Toolkit，我借助 GPT 给 UI Builder 补了些信息
 
 ## 视频简介
 
-我是 **UI Builder Navigator** 的作者。学习和使用 UI Toolkit 时，我经常需要在画布元素、UXML 标签、匹配的 USS 规则和最终布局值之间来回查找，因此做了这个 Editor 扩展，把这些信息联动到 UI Builder 里。
+我是 **UI Builder Navigator** 的作者。这个项目起于我尝试使用 Unity 6 的 UI Toolkit 做界面。对刚开始学习的我来说，UI Builder 展示的信息偏少，操作起来也不太顺手：选中的元素对应哪段 UXML、应用了哪些 USS、样式为什么生效、父容器怎样影响布局，都需要来回查找。
+
+于是，我开始借助 GPT 开发扩展，尝试把这些缺少的信息补到 UI Builder 里。这个插件就从学习过程中实际遇到的问题出发，逐步加上了源码联动、样式来源和布局诊断，方便我看懂正在编辑的界面，也希望能帮到遇到同样困惑的人。
 
 `0.2.0` 目前包括：
 
@@ -42,6 +45,6 @@ https://github.com/codedeefmd/UI-Builder-Navigator.git?path=/Packages/com.poorl.
 
 ## 45 秒中文口播
 
-> Unity UI Builder 能做界面，但选中一个元素后，我经常还要手动寻找它来自哪段 UXML、匹配了哪条 USS，以及父容器到底怎样影响布局。于是我做了这个开源插件 UI Builder Navigator。选中画布元素，它会定位 UXML 标签；通过“相关样式”可以跳到对应 USS，同时保留当前元素。右侧诊断页还能查看只读的样式来源、覆盖关系、颜色块、盒模型，以及父容器和当前元素的布局对照。项目采用 MIT 许可证，并附带三页中英文 Learning Lab。目前只验证了 Unity 6000.3.27f1 的 Windows Editor，仓库和安装地址在简介里，欢迎告诉我你最想继续补哪项 UI Builder 能力。
+> 尝试用 Unity 6 的 UI Toolkit 做界面时，我觉得 UI Builder 给的信息太少，用起来也不顺手。元素对应哪段代码，样式为什么生效，布局又受谁影响，都要来回找。于是我借助 GPT，做了 UI Builder Navigator，逐步补上这些信息。它能联动定位 UXML 和 USS，查看样式来源、颜色块、盒模型和父子布局，并附有中英文示例。项目采用 MIT 许可证，目前验证的是 Unity 6000.3.27f1 的 Windows Editor，仓库和安装地址在简介里。
 
 口播必须搭配真实 `0.2.0` 操作录屏；具体镜头顺序见 `recording-script.md`。

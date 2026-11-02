@@ -4,6 +4,10 @@
 
 UI Builder Navigator `0.2.0` 是首个公开版本。这是一个仅在 Editor 中运行的 Unity UI Builder 扩展，用于把元素、UXML 标签、USS 规则、计算样式和布局诊断保持在同一工作流中。
 
+### 创建初衷
+
+尝试使用 Unity 6 的 UI Toolkit 时，我觉得 UI Builder 展示的信息偏少，操作也不够顺手。对刚开始学习的我来说，元素对应的 UXML、影响它的 USS、样式生效原因和父容器的布局影响，都需要来回查找。于是，我开始借助 GPT 开发扩展，把学习过程中想看却不容易找到的信息补到 UI Builder 里，逐步形成了这个插件。
+
 ### 主要功能
 
 - UXML/USS 完整内存预览：语法配色、行号、独立搜索和结果定位。
@@ -57,6 +61,10 @@ Window → UI Toolkit → USS Preview Navigator
 ## English
 
 UI Builder Navigator `0.2.0` is the first public release of an Editor-only Unity UI Builder extension that keeps elements, UXML tags, USS rules, computed styles, and layout diagnostics connected in one workflow.
+
+### Why I built it
+
+While trying UI Toolkit in Unity 6, I felt UI Builder exposed too little information and found the workflow awkward. As a newcomer, I kept going back and forth to find an element's UXML, the USS affecting it, why a style won, and how its parent influenced layout. I began building an extension with GPT's help to bring the information I wanted while learning into UI Builder, and it gradually became this plugin.
 
 ### Highlights
 

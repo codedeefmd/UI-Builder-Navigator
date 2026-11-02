@@ -28,11 +28,11 @@
 
 ## 中文口播（约 42 秒）
 
-> 我是 UI Builder Navigator 的作者。选中画布元素后，插件会直接定位它的 UXML 开始标签；通过“相关样式”，还能跳到对应 USS 规则，同时保留当前元素。右侧诊断页提供只读的样式来源、覆盖关系和透明色颜色块。盒模型与父子布局对照可以把计算结果和画布范围放在一起看。项目采用 MIT 许可证，并附带三页中英文 Learning Lab。目前只验证了 Unity 6000.3.27f1 的 Windows Editor，仓库与安装地址见说明。
+> 尝试用 Unity 6 的 UI Toolkit 做界面时，我觉得 UI Builder 给的信息太少，用起来也不顺手。于是我借助 GPT，开发了 UI Builder Navigator，补充学习时想看却不容易找到的信息。选中元素能定位 UXML，通过相关样式能跳到 USS；诊断页能查看样式来源、颜色块、盒模型和父子布局。项目采用 MIT 许可证，附有中英文示例。目前验证的是 Unity 6000.3.27f1 的 Windows Editor，仓库和安装地址见说明。
 
 ## English voice-over (about 42 seconds)
 
-> I’m the author of UI Builder Navigator. Selecting a canvas element reveals its UXML opening tag, and Related Styles can locate a matching USS rule without losing the element context. The Diagnostics tab adds read-only style sources, overridden declarations, and alpha-aware color swatches. The box model and parent/current layout comparison connect computed values to canvas bounds. The project is MIT licensed and includes a three-page bilingual Learning Lab. It is currently verified only with Unity 6000.3.27f1 on Windows Editor; the repository and install URL are in the description.
+> While trying UI Toolkit in Unity 6, I found UI Builder hard to follow and felt it showed too little information. I built UI Builder Navigator with GPT's help to fill the gaps I encountered while learning. Selecting an element reveals its UXML tag; Related Styles locates matching USS rules. Diagnostics shows style sources, color swatches, a box model, and parent/current layout comparisons. It is MIT licensed, with bilingual examples. Currently verified with Unity 6000.3.27f1 on Windows Editor; the repository and install URL are in the description.
 
 ## 录制后检查 / Post-recording checks
 

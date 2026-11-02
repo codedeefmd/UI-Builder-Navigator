@@ -8,7 +8,9 @@ I built an MIT-licensed UI Builder extension for linked UXML/USS navigation and 
 
 ## Post body
 
-I’m the author of **UI Builder Navigator**, an open-source, Editor-only extension I made after repeatedly losing context between a selected UI Builder element, its UXML tag, the USS rules affecting it, and the layout Unity actually computed.
+I’m the author of **UI Builder Navigator**, an open-source, Editor-only extension. I started it while trying UI Toolkit in Unity 6: as a newcomer, I felt UI Builder showed too little information to understand the selected element, and I found the workflow awkward. I kept going back and forth to find its UXML tag, the USS rules affecting it, why a style won, and how the parent affected its layout.
+
+I began building this extension with GPT's help to fill those gaps as I encountered them. The idea was to make the element, its source, its styles, and its computed layout easier to follow inside UI Builder.
 
 The `0.2.0` version currently provides:
 
